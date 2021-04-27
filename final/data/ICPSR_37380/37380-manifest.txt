@@ -1,0 +1,52 @@
+File Manifest for ICPSR 37380
+
+Ramakrishnan, S. Karthick (Subramanian Karthick), Jennifer Lee, Taeku Lee,
+and Janelle Wong. National Asian American Survey (NAAS) Post-Election
+Survey, [United States], 2016. ICPSR37380-v1. Ann Arbor, MI: Inter-
+university Consortium for Political and Social Research [distributor],
+2020-01-30. http://doi.org/10.3886/ICPSR37380.v1
+
+
+Study-level Documentation
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    37380-descriptioncitation.pdf       -       -         -       2020-02-03  -
+
+    37380-manifest.txt                  -       -         -       daily       -
+
+
+DS0001 Public-Use Data
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    37380-0001-Codebook-ICPSR.pdf       -       -         -       2020-01-30  dbc4a1a141c285053f71b294f6f38667
+
+    37380-0001-Data.dta                 -       6,448     386     2020-01-30  0286e3c37016c46d35f909bdf521a219
+
+    37380-0001-Data.rda                 -       6,448     386     2020-01-30  2254f2660d2a911ab62a7d4a0df23d45
+
+    37380-0001-Data.sav                 -       6,448     386     2020-01-30  1a53743b15be211bdba99e18bf5d0926
+
+    37380-0001-Data.stc                 -       6,448     386     2020-01-30  d8bbc185350209af7569a5d668dc0c85
+
+    37380-0001-Data.tsv                 -       6,448     386     2020-01-30  2d8d71b56c432397d56445f859cb01dd
+
+    37380-0001-Data.txt                 1752    6,448     386     2020-01-30  4f36db6e7bc3056c78b2125346d1d085
+
+    37380-0001-Questionnaire.pdf        -       -         -       2020-01-30  16a0f917e062d86333e4f7d1cd62dfd0
+
+    37380-0001-Setup.dct                -       -         -       2020-01-30  0c04c980c65b15c56699f0949396d640
+
+    37380-0001-Setup.do                 -       -         -       2020-01-30  1a0191a6633c07340fb4a9589931362a
+
+    37380-0001-Setup.sas                -       -         -       2020-01-30  7a79fdef55d4687759d4f2f4712543a7
+
+    37380-0001-Setup.sps                -       -         -       2020-01-30  043cdfea7e3e5e253d15f69774078659
+
+    37380-0001-Supplemental_syntax.do   -       -         -       2020-01-30  bdb448956366cd03157edf409504db25
+
+    37380-0001-Supplemental_syntax.sas  -       -         -       2020-01-30  38a20f735f31c5c9f601380a448fde50
+

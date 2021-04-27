@@ -1,0 +1,55 @@
+File Manifest for ICPSR 37024
+
+Ramakrishnan, S. Karthick (Subramanian Karthick), Jennifer Lee, Taeku Lee,
+and Janelle Wong. National Asian American Survey (NAAS) Pre-Election
+Survey, [United States], 2016. ICPSR37024-v1. Ann Arbor, MI: Inter-
+university Consortium for Political and Social Research [distributor],
+2018-05-02. http://doi.org/10.3886/ICPSR37024.v1
+
+
+Study-level Documentation
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    37024-descriptioncitation.pdf       -       -         -       2019-12-09  -
+
+    37024-related_literature.txt        -       -         -       daily       -
+
+    37024-manifest.txt                  -       -         -       daily       -
+
+
+DS0001 National Asian American Survey (NAAS) Pre-Election Survey, [United
+States], 2016
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    37024-0001-Codebook.pdf             -       -         -       2018-05-02  a50a70d26d262157592c6e31eb9e7518
+
+    37024-0001-Data.dta                 -       4,787     316     2018-05-02  74c4b6623fceee382f32faa0b88bb0dd
+
+    37024-0001-Data.rda                 -       4,787     316     2018-05-02  c7d03dfe18ace9804314bfe5d0f09658
+
+    37024-0001-Data.sav                 -       4,787     316     2018-05-02  b43a75bdbb8f0fcc73e574b55aed4e8f
+
+    37024-0001-Data.stc                 -       4,787     316     2018-05-02  5b4524d12f3109f10047b3d50c1649d5
+
+    37024-0001-Data.tsv                 -       4,787     316     2018-05-02  ade85baf740265a350ab871d7a70ad29
+
+    37024-0001-Data.txt                 2144    4,787     316     2018-05-02  3ca370f50e8875ce83eb73dd040a4cc0
+
+    37024-0001-Questionnaire.pdf        -       -         -       2018-05-02  e9672355f763a5cc38d8ef3f1b9978e3
+
+    37024-0001-Setup.dct                -       -         -       2018-05-02  edb2736e06f3d78eeb7e44441d86f5f9
+
+    37024-0001-Setup.do                 -       -         -       2018-05-02  37cabd9a2d1349171fbaba6dedc6098b
+
+    37024-0001-Setup.sas                -       -         -       2018-05-02  8fab68482c4629a6deeb27449b26d6e2
+
+    37024-0001-Setup.sps                -       -         -       2018-05-02  4d5c2ce7bcb1e83bf66bbeea4b2ab6bf
+
+    37024-0001-Supplemental_syntax.do   -       -         -       2018-05-02  0d59704844ece9a7ac84515eea518caf
+
+    37024-0001-Supplemental_syntax.sas  -       -         -       2018-05-02  0ad8760de848b136954919a6959f62db
+

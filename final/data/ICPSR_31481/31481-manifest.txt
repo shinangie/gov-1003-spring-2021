@@ -1,0 +1,62 @@
+File Manifest for ICPSR 31481
+
+Ramakrishnan, S. Karthick (Subramanian Karthick), Jane Junn, Taeku Lee, and
+Janelle Wong. National Asian American Survey (NAAS), [United States], 2008.
+ICPSR31481-v2. Ann Arbor, MI: Inter-university Consortium for Political and
+Social Research [distributor], 2012-07-19.
+http://doi.org/10.3886/ICPSR31481.v2
+
+Details on the version history can be found below the file listings.
+
+
+Study-level Documentation
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    31481-descriptioncitation.pdf       -       -         -       2019-12-09  -
+
+    31481-related_literature.txt        -       -         -       daily       -
+
+    31481-manifest.txt                  -       -         -       daily       -
+
+
+DS0001 National Asian American Survey (NAAS), [United States], 2008
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    31481-0001-Codebook.pdf             -       -         -       2012-07-19  b182fab0f11ca7f51a10801f0080eece
+
+    31481-0001-Data.dta                 -       5,159     173     2012-07-19  67812eb016c050b583fe2e652bd75543
+
+    31481-0001-Data.sav                 -       5,159     173     2012-07-19  2596a0bc2ab0041bcaa31ff26fb5c2fe
+
+    31481-0001-Data.stc                 -       5,159     173     2012-07-19  de129a756a1c9e68b180521934dc69be
+
+    31481-0001-Data.tsv                 -       5,159     173     2012-07-19  8ed3667b7663b76fbad1a010da6d8b55
+
+    31481-0001-Data.txt                 902     5,159     173     2012-07-19  c0231e7697e4fb158452afb8c7ad4a6e
+
+    31481-0001-Questionnaire.pdf        -       -         -       2012-07-19  196b3705883990c700ab1539c5750414
+
+    31481-0001-Setup.dct                -       -         -       2012-07-19  ab6229d5ddb271c102af46d7149d6f77
+
+    31481-0001-Setup.do                 -       -         -       2012-07-19  cde2f81e8f210819e5714bdb6d5166c2
+
+    31481-0001-Setup.sas                -       -         -       2012-07-19  2dbde2a35b39a866387c4d7f5a18cf7c
+
+    31481-0001-Setup.sps                -       -         -       2012-07-19  3f9f9f696535bb42bb5e8d7c7d5c3a0c
+
+
+Version History
+
+2012-07-19 (1) The SAMPLE field has been updated to show a more complete
+description of the sampling frame used in the study. (2) Updated data and
+ICPSR generated codebook reflects corrections to some of the geographic
+coding errors in five variables of the previous dataset. In addition the
+data now contains a more appropriate re-estimation of weights. Changes in
+the relevant variables are noted below: countyname: 13 changes out of 5159
+cases state: 72 changes out of 5159 cases newasiandest: 23 out of 5159
+cases newdest6: 334 out of 5159 cases newdest2: 156 out of 5159 cases
+nweightnatyrs: 4556 changes out of 5159 cases

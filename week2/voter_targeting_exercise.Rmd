@@ -1,0 +1,336 @@
+---
+title: "Voter Targeting Exercise"
+subtitle: DPI 610
+author: Week 2
+date: February 3, 2021
+output: 
+  pdf_document:
+    number_sections: true
+---
+
+```{r setup, include=F}
+#load packages
+library(caTools)
+
+# load data
+nc_cces <- read.csv("nc_cces.csv", stringsAsFactors=F)
+
+# Wrangle data a bit
+# Set reference level in factor for race to white
+race_levels <- c("C", "H", "M", "B", "N", "A")
+nc_cces$race <- factor(nc_cces$race, levels = race_levels)
+
+#Split CCES into training and test
+set.seed(02138)
+nc_cces_split <- sample.split(nc_cces$id,SplitRatio=0.75)
+
+train_id <- nc_cces[nc_cces_split==T,"case_id"]
+test_id <- nc_cces[nc_cces_split==F,"case_id"]
+
+#Define functions that we may use later
+percentit <- function(x, digits = 2, format = "f", ...)
+{
+  paste(formatC(100 * x, format = format, digits = digits, ...), "%", sep = "")
+}
+```
+ 
+# Introduction  {-}
+ 
+You are a campaign consultant for the Republican candidate in the US Senate race in North Carolina in 2016. Your boss, incumbent Republican Richard Burr (R-NC), is running against challenger Deborah Ross. By all accounts, you are in for a close race. This is challenging because you are trying to learn how to use R and also do a good job as a campaign consultant.
+
+In this exercise, we will be using **R** to load survey data, identify targeted voters, and evaluate the efficiency of that targeting. 
+
+Then, we will use a prediction model to construct an (improved) list of voters for persuasion targeting.
+
+# Preliminaries: Some Basic R Operations and Object Types  {-}
+
+The first step to using **R** is understanding some basic object types and operations, such as the ones below:
+
+## Object Types  {-}
+
+- Numbers:
+  - Integers: 1, 2, 10456
+  - Doubles: 1.2, 3.99, -15.75769567
+- Strings / characters:
+  - Enclosed in single or double quotes.
+      - "Joe Biden", 'Bernie Sanders'
+      - Numbers in quotes are treated as strings:
+- Booleans:
+  - Object that can only have the value `TRUE` or `FALSE`.
+  - Can be abbreviated to `T` or `F`.
+- Groups of Objects:
+  - The function `c()` creates vectors and lists:
+    - Vectors are sets of the same data type.
+    - Lists may have different types.
+
+
+## Question 1 {-}
+
+Suppose we conducted a survey and we wanted to record the ages of 5 people we surveyed, aged 21, 36, 27, 55, and 78. In the code chunk below, write code to assign a vector with those five ages to an object called 'ages'. Print your answer using the function `print()`.
+
+## Answer 1 {-}
+
+```{r Q1}
+#Insert Answer Here
+
+```
+
+## Operations  {-}
+
+| Symbol        | Use                    |
+| ------------- |------------------------|
+| `<-`          | Assign value to object |
+| `==`          | Test equality          |
+| `!=`          | Test not equal         |
+| `&`           | And                    |
+| <code>&#124;</code> | Or               |
+| `!`           | Not                    |
+
+
+
+## Question 2 {-}
+
+Use the object you just defined, `ages`, and apply a logical operation to identify the ages in that vector that are over the age of 40 years old. Print your answer using the function `print()`.
+
+## Answer 2 {-}
+
+```{r Q2}
+#Insert Answer Here
+
+```
+
+
+## Indexing and Subsetting  {-}
+
+Sometimes we want to refer to just some values in a dataset or variable. We can subset using square brackets: `[]`
+
+- Use a sequence `x[1:5]`
+- Use a vector `x[c(1, 3, 9, 5)]`
+- Exclude using a negative number: `x[-3]`; `x[-length(x)]`
+- The first value in a vector is indexed to `1` (not `0`, as in some other languages).
+
+
+## Question 3 {-}
+
+Subset the vector defined in Question 1 (`ages`) to ages over 40.
+
+## Answer 3 {-}
+
+```{r Q3}
+#Insert Answer Here
+
+```
+
+# Analysis of CCES Survey   {-}
+
+## Key Variables in CCES Survey  {-}
+
+The CCES is a political survey that contains some key demographic variables of voters, as well as their pre-election vote intentions. We have pre-loaded the dataset in the R environment. The dataset is saved in an object called `nc_cces`. 
+
+Let's examine a few key variables from this survey.
+
+| Variable name | Description | 
+| --------------| --------------| 
+| `case_id`     | Unique identification number of respondents | 
+| `age`         | Age  | 
+| `gender`      | Gender (F or M) | 
+| `vv_regstatus`| Validated registration status | 
+| `race`        | Race | 
+| `familyincome`| Family income | 
+| `college_grad_prob` | College graduates (1) or not (0) |
+| `married_prob`      | Married (1) or not (0) |
+| `intent_sen`  | Voting intention for Senate race | 
+
+
+## Question 4 {-}
+
+Subset columns of dataset `nc_cces` so that it only contains `"case_id"`,`"age"`,`"gender"`,`"party"`,`"vv_regstatus"`, and `"race"`.
+Use `head()` function to view the first 5 rows of the subsetted dataset.
+
+
+## Answer 4 {-}
+
+```{r cces header}
+
+#insert answer here
+
+```
+
+## Accessing Variables in Data Frame  {-}
+
+There are many ways to access variables within data frames.
+
+`object_name$variable_name` refers to `variable_name` within `object_name`.
+
+```{r variables}
+nc_cces$age[1:10]
+
+mean(nc_cces$age)
+
+mean(nc_cces$married_prob)
+
+class(nc_cces$married_prob)
+class(nc_cces$race)
+```
+
+Mathematical operations on a vector/variable apply to every value:
+
+```{r}
+nc_cces$age[1:10] * 2
+
+#Suppose we wanted to create a new age-squared variable
+nc_cces$age_squared <- nc_cces$age^2
+
+nc_cces$age[1:10]
+
+nc_cces$age_squared[1:10]
+
+```
+
+## Persuadable Voters  {-}
+
+Before you started working for the Burr campaign, the previous consultant decided to stick to a simple criterion for identifying persuadable voters. The previous consultant cut a list from the voter file that identified persuadable voters as all people who: (1) Had active registration, (2) Did not belong to either party, and (3) Were White.
+
+Let's identify who fits these criteria. 
+
+```{r old list}
+nc_cces$old_list <- as.numeric(nc_cces$vv_regstatus=="Active" & 
+                                 nc_cces$party %in% c("NPA","LIB") & 
+                                 nc_cces$race == "C")
+```
+
+The old list comprises `r percentit(mean(nc_cces$old_list))` of the total sample. 
+
+## Question 5 {-}
+
+Suppose instead the previous consultant had not used race to identify persuadable voters but had instead used age, particularly people 65 and over. Define a new variable in the dataset called 'old_list2' based on this. What percent of the sample would that list have comprised?
+
+## Answer 5 {-}
+
+```{r Q4}
+#Insert Answer Here
+
+```
+
+To determine the "efficiency" of the actual old list, let's examine the share of voters in the list who when polled said that they did not intend to vote for either the Democratic or Republican candidate.
+
+We use the `%in%` operator preceded by an "!", which means "not". So the statement below says to code as "undecided" anyone who did not say their intent was to vote for a D or R candidate.
+
+```{r undecided}
+nc_cces$undecided <- as.numeric(!(nc_cces$intent_sen %in% c("[Democrat / Candidate 1]",
+                        "[Republican / Candidate 2]")))
+```
+
+Now, to find the share of voters in the old list who were really undecided (i.e., the efficiency), just take the mean of the binary variable "undecided", conditional on being part of the old list.
+
+```{r old list efficiency}
+
+old_list_efficiency<-mean(nc_cces$undecided[nc_cces$old_list==1])
+print(old_list_efficiency)
+
+pop_efficiency <- mean(nc_cces$undecided)
+
+```
+
+The efficiency for the old list is `r percentit(old_list_efficiency)`. This compares to an efficiency of  `r percentit(pop_efficiency)` in the full population. So the old method was actually doing a worse job than just randomly contacting people, if the goal was to target undecided voters.
+
+## Question 6 {-}
+
+If the previous consultants had replaced the race criterion with age (65 and over), would it have resulted in a more or less efficient list targeting persuadable voters?
+
+## Answer 6 {-}
+
+```{r Q5}
+#Insert Answer Here
+
+```
+
+We can also determine the old list's coverage (recall coverage is the share of target voters in the full population actually reached by the list). In this case, to determine coverage we find the percent of all undecided voters in the old list.
+
+```{r old list coverage}
+old_list_coverage <- sum(nc_cces$undecided==1 & nc_cces$old_list==1)/sum(nc_cces$undecided==1)
+```
+
+The coverage for the old list is `r percentit(old_list_coverage)`.
+
+Overall, it is safe to say that the old method of identifying persuadable target voters was not working too well.
+
+## Candidate Support Model  {-}
+
+Let's now create a simple model for understanding who supports our candidate, Richard Burr (R-NC). Let's be sure to make use of the new information we have from our survey on who various voters are likely to support. (Also, for this exercise, let's ignore any issues with survey weights -- we'll cover this in a later part of the course.)
+
+We want to split our data into a training and a test set, so we can get a sense of how well our model would perform on new data. Note that this was done at the start in the 'setup' code chunk.
+
+```{r candidate support model}
+# Create binary variable that has value 1 for people who say they 
+#intend to vote for Burr, and 0 otherwise.
+
+nc_cces$burr <- as.numeric(nc_cces$intent_sen == "[Republican / Candidate 2]")
+
+# Run a logistic model
+model1 <- glm(burr~as.factor(gender)+as.factor(race)+age
+              +I(age^2)+log(1+familyincome)+college_grad_prob
+              +married_prob,
+              data=subset(nc_cces,case_id %in% train_id),family="binomial")
+
+summary(model1)
+```
+
+Now let's use the fitted values from the model to predict a support score for Burr. Someone who has a score around 0.5 should be most on the fence. Let's start by classifying anyone between 0.3 and 0.7 as undecided. And then calculate efficiency and coverage when using our model in the test set.
+```{r candidate support efficiency and coverage}
+
+#predicted probabilities
+yhat <- predict(model1,newdata=subset(nc_cces,case_id %in% test_id),type="response")
+
+#predicting persuadable voters
+nc_cces$undecided_predict[nc_cces$case_id %in% test_id] <- as.numeric(yhat>=0.3 & yhat < 0.7)
+nc_cces$yhat[nc_cces$case_id %in% test_id] <- yhat
+
+#new list based on persuadable voters
+new_list <- subset(nc_cces,undecided_predict==1 & case_id %in% test_id)
+
+#calculate efficiency of new list
+burr_test_efficiency <- mean(new_list$undecided,na.rm=T)
+old_test_efficiency <- mean(nc_cces$undecided[nc_cces$old_list ==1 
+                                              & nc_cces$case_id %in% test_id],na.rm=T)
+
+burr_test_coverage <- sum(new_list$undecided)/sum(nc_cces$undecided[nc_cces$case_id %in% test_id])
+old_test_coverage <- sum(nc_cces$undecided[nc_cces$old_list ==1 
+                                           & nc_cces$case_id %in% test_id],na.rm=T)/
+                                            sum(nc_cces$undecided
+                                            [nc_cces$case_id %in% test_id],na.rm=T)
+```
+
+In the test set, our model results in an efficiency of `r percentit(burr_test_efficiency)` as compared to an efficiency of `r percentit(old_test_efficiency)` in the same test data for the old list. The level of coverage in the new list based off of our model is `r percentit(burr_test_coverage)` as compared to `r percentit(old_test_coverage)` using the old list. 
+
+This is not great. Let's assess how well the model is actually working using accuracy, precision and recall. We will assess it's predictions in the test set (comparing them to actual vote intention).
+
+```{r assessing out of sample prediction}
+
+nc_test_data <- subset(nc_cces,case_id %in% test_id)
+
+print("2x2 Table, Predicted vs. Actual")
+out_table<-table(nc_test_data$undecided_predict,nc_test_data$undecided)
+print(out_table)
+
+accuracy<-(out_table[1,1]+out_table[2,2])/sum(out_table)
+print(paste("Accuracy, i.e., share of predictions correct is:",percentit(accuracy)))
+
+precision <- out_table[2,2]/(out_table[2,2]+out_table[2,1])
+recall <- out_table[2,2]/(out_table[2,2]+out_table[1,2])
+
+print(paste("Precision is:",percentit(precision)))
+print(paste("Recall is:",percentit(recall)))
+```
+## Question 7  {-}
+
+_**Your boss says that this level of model performance and efficiency is not good enough. Can you come up with an alternative model and/or threshold that improves on the results from above?**_
+
+## Answer 7  {-}
+
+```{r Q6}
+#Insert Answer Here
+
+```
+
+

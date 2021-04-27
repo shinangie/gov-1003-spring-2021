@@ -1,0 +1,393 @@
+---
+title: "Homework Assignment 2"
+subtitle: DPI 610
+output:
+  pdf_document: default
+---
+
+```{r setup, include=TRUE, echo=FALSE, message=FALSE,warning=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+## load packages
+library(car)
+library(pROC)
+library(estimatr)
+library(tidyverse)
+library(infer)
+library(tidymodels)
+
+## load data 
+dat <- readRDS("fl_data.rds")
+fl  <- dat$fl 
+fl_cces <- dat$fl_cces
+```
+
+# Introduction 
+
+You are employed at a political consulting firm that will be working on several races in Florida in 2020. Your boss has assigned you to look back over data gathered from an experiment conducted by your firm preceding the 2014 general election that (for some strange reason) was never analyzed (the data set is named `fl` and pre-loaded). 
+
+In the experiment, the firm mailed postcards to a randomly selected set of registered voters, showing the recipient their past turnout history and comparing it to the level of participation of the typical person in their state.^[The data comes from the replication archive of the paper "The Generalizability of Social Pressure Effects on Turnout Across High-Salience Electoral Contexts: Field Experimental Evidence From 1.96 Million Citizens in 17 States" by Alan Gerber, Greg Huber, Albert Fang, and Andrew Gooch.] Your task is to determine what lessons, if any, can be drawn from this experiment and applied to future efforts at boosting turnout among target voters.
+
+# Question 1: Sample Population and Randomization
+
+## Question 1(a)
+
+The 2014 American Community Survey (ACS) estimates that the demographic breakdown (in terms of Race) in Florida is the following:
+
+| Race     | Pct  |
+|----------|------|
+| White    | 56.6 |
+| Black    | 15.4 |
+| Hispanic | 23.3 |
+| Other    | 4.7  |
+
+How does the demographic breakdown of the sample of voters in our `fl` data  compare to the ACS estimates in terms of race? Use the `race` variable to compute the proportion of racial categories.
+
+Briefly interpret the result.
+
+## Answer 1(a)
+
+```{r Q1a}
+fl %>% 
+  group_by(race) %>% 
+  summarize(pct = round(100*n()/nrow(fl), digits = 4)) %>% 
+  mutate(acs_pct = c(15.4, 23.3, 4.7, 56.6),
+         pct_diff = pct - acs_pct)
+```
+
+The sample data from the fl dataset has around 12% more Black voters, 9% more Hispanic voters, less than 1% more Other-identifying voters, and 22% less white voters. 
+
+## Question 1(b)
+
+In terms of gender, the 2014 ACS estimates were that 51.1 percent of the population in Florida is female. How does our sample compare? 
+
+## Answer 1(b)
+```{r Q1b}
+fl %>% 
+  summarize(gender = c("Female", "Not Female"),
+            pct = c(100*round(mean(female), digits = 2), 
+                    100*round(1 - mean(female), digits = 2))) %>% 
+  mutate(acs_pct = c(51.1, 100-51.1),
+         diff = pct - acs_pct)
+```
+
+The sample data from the fl dataset has around 17% more female voters.
+
+## Question 1(c)
+
+In terms of turnout, the breakdown between 2006 and 2014 in Florida^[Available at https://dos.myflorida.com/elections/data-statistics/elections-data/voter-turnout] was as follows:
+
+| Year     | Pct  |
+|----------|------|
+| 2006     | 47   |
+| 2008     | 75   |
+| 2010     | 49   |
+| 2012     | 72   |
+| 2014     | 51   |
+
+How does our sample compare?
+
+## Answer 1(c)
+
+```{r Q1c}
+fl %>% 
+  select(starts_with("voted")) %>% 
+  pivot_longer(cols = c(starts_with("voted")), 
+               names_to = "year", 
+               names_prefix = "voted",
+               values_to = "value") %>% 
+  mutate(year = as.integer(year) + 2000) %>% 
+  group_by(year) %>% 
+  summarize(pct = 100*round(mean(value), digits = 2)) %>% 
+  mutate(acs_pct = c(47, 75, 49, 72, 51),
+         diff = pct - acs_pct)
+```
+
+The sample data from the fl dataset has around 28% less 2006 voters, 14% less 2008 voters, 22% less 2010 voters, 18% less 2012 voters, and 17% less 2014 voters than the ACS data.
+
+## Question 1(d)
+
+One reason why randomized experiments allow us to estimate the causal impact of an intervention is because, through randomization, the observable and unobservable characteristics of the subjects in the experiment are independent of, or at least uncorrelated with, treatment assignment. One consequence of this is that covariates will be "balanced" between the treatment and control group. You can check for balance by calculating the mean of a variable for the treatment group and for the control group.
+
+Is the turnout history of subjects in the experiment between 2006 and 2012 balanced between treatment and control?
+
+## Answer 1(d)
+
+```{r Q1d}
+fl %>% 
+  select(id, treat, starts_with("voted")) %>% 
+  pivot_longer(cols = c(starts_with("voted")), 
+               names_to = "year", 
+               names_prefix = "voted",
+               values_to = "value") %>% 
+  group_by(year, treat) %>% 
+  summarize(pct = round(100*mean(value), digits = 2))
+```
+
+Yes, the turnout history of subjects in the experiment between 2006 and 2012 has negligible difference in the percentages per group such that it is balanced between treatment and control. 
+
+## Question 1(e)
+
+Are gender, marriage, age and race balanced between treatment and control?
+
+## Answer 1(e)
+
+```{r Q1e}
+pct_fl <- function(var){
+  round(100*mean(var), digits = 2)
+}
+
+fl %>% 
+  select(id, treat, female, married, age, race) %>% 
+  pivot_wider(names_from = race,
+              values_from = race) %>% 
+  mutate_at(c("W", "H", "B", "O"),
+            ~ ifelse(is.na(.), 0, 1)) %>%
+  group_by(treat) %>% 
+  summarize(pct_female = pct_fl(female), 
+            pct_married = pct_fl(married), 
+            mean_age = round(mean(age), digits = 2),
+            pct_white = pct_fl(W), 
+            pct_black = pct_fl(B),
+            pct_hispanic = pct_fl(H),
+            pct_other = pct_fl(O))
+```
+
+Yes, the turnout history of subjects in the experiment has negligible difference in the percentages per gender, marriage, age and race such that it is balanced between treatment and control. 
+
+## Question 1(f)
+
+What is the probability that the observed difference in 2012 turnout rate between treatment and control would occur due to random chance? Use permutation inference to determine this (use `set.seed(1234)` so your results are replicable).
+
+Specifically, first compute the difference-in-means on `voted12` between the treatment and control group. Then, permute the treatment assignment 1000 times, and compute the difference-in-means based on each permuted treatment assignment. Finally, plot the histogram of difference-in-means over the 1000 permutations. Show the observed difference-in-means (i.e., the actual value that we observed in the data) as the vertical line.
+
+Compute the two-sided p-value based on the permuted difference-in-means.
+
+Can we reject the null hypothesis of no effect on the past outcome? 
+
+## Answer 1(f)
+
+```{r Q1f}
+og_diff <- fl %>% 
+  select(id, treat, voted12) %>% 
+  group_by(treat) %>% 
+  summarize(mean = mean(voted12), .groups = "keep") %>% 
+  mutate(treat = ifelse(treat == 1, "Treated", "Control")) %>% 
+  pivot_wider(names_from = treat, values_from = mean) %>%
+  summarize(diff = Treated - Control)
+
+set.seed(1234)
+
+draws1 <- rep(NA, 1000)
+
+for (draw1 in 1:1000) {
+  rep_treat1 <- sample(fl$treat, replace = FALSE)
+  draws1[draw1] <- mean(fl$voted12[rep_treat1 == 1], na.rm = TRUE) - 
+    mean(fl$voted12[rep_treat1 == 0], na.rm = TRUE)
+}
+
+hist(draws1, breaks = 33)
+abline(v = og_diff$diff, lty = 2, col = "red")
+
+# diff1 <- fl %>%
+#   select(id, treat, voted12) %>%
+#   rep_sample_n(nrow(fl), replace = TRUE, reps = 1000) %>%
+#   group_by(replicate, treat) %>%
+#   summarize(mean = mean(voted12)) 
+# 
+# diff1 %>%
+#   mutate(treat = ifelse(treat == 1, "Treated", "Control")) %>%
+#   pivot_wider(names_from = treat,
+#               values_from = mean) %>%
+#   mutate(diff = Treated - Control) %>% 
+#   ggplot(aes(diff)) +
+#   geom_histogram() +
+#   geom_vline(aes(xintercept = og_diff$diff)) +
+#   theme_minimal()
+
+estimatr1 <- difference_in_means(voted12 ~ treat, data = fl)
+``` 
+
+No, we cannot reject the null hypothesis of no effect on the past outcome. The actual difference in means appears significantly closely to the center of the distribution. Because the histogram shows normally distributed behavior, we can assume that the center of the distribution is also the mean of the distribution, which means that within one standard deviation of the center of the distribution will immediately capture more than two-thirds of the replicate date we've devised. Since our actual difference in means in our original observed sample is so close to the mean, there's a significant chance that this event occurs at random. Therefore, we fail to reject the null hypothesis of no effect on the past outcome. In addition, the p-value of `r estimatr1$p.value` is far below our actual difference in means, which further asserts our conclusion that it is not a statistically significant result.
+
+# Question 2: Estimating Treatment Effects
+
+In Question 2, we estimate the treatment effect using the `fl` data. 
+
+## Question 2(a)
+
+What is the overall 2014 turnout rate for people in the sample? What is the 2014 turnout rate for people in the treatment group? In the control group? What is the estimate of the average treatment effect (ATE) from the experiment? Using permutation inference, determine the statistical significance of the difference in turnout rates for people in the treatment group versus the control group (use 500 draws and `set.seed(02138)` so your results are replicable).
+
+## Answer 2(a)
+
+```{r Q2a}
+turnout_overall <- fl %>% 
+  summarize(turnout = mean(voted14))
+
+turnout_treated <- fl %>% 
+  filter(treat == 1) %>% 
+  summarize(turnout = mean(voted14))
+
+turnout_control <- fl %>% 
+  filter(treat == 0) %>% 
+  summarize(turnout = mean(voted14))
+
+set.seed(02138)
+
+draws2 <- rep(NA, 1000)
+
+for (draw2 in 1:500) {
+  rep_treat2 <- sample(fl$treat, replace = FALSE)
+  draws2[draw2] <- mean(fl$voted14[rep_treat2 == 1], na.rm = TRUE) - 
+    mean(fl$voted14[rep_treat2 == 0], na.rm = TRUE)
+}
+
+hist(draws2, breaks = 33)
+
+estimatr2 <- difference_in_means(voted14 ~ treat, data = fl)
+```
+
+The overall 2014 turnout rate from the sample is `r turnout_overall$turnout`. For the treatment group, the 2014 turnout rate is `r turnout_treated$turnout`; for the control group, it's `r turnout_control$turnout`. The estimated ATE is `r turnout_treated$turnout - turnout_control$turnout`. Since the p-value is `r estimatr1$p.value`, the difference in turnout rates for people in the treatment group versus the control group is statistically significant.
+
+## Question 2(b)
+
+The intervention involved sending a postcard with someone's past voting history on it and telling the recipient if he or she voted more than the typical person in the state. Would you hypothesize that the ATE is: (1) larger for people with a history of regular voting, (2) larger for people with a history of not voting, or (3) the same for both types? Why?
+
+## Answer 2(b)
+
+I would hypothesize that the ATE is larger for people with a history of not voting because they would see that they participate less than the typical person in their state, which could induce social pressure to be a more active citizen that can contribute to increased voter turnout.
+
+## Question 2(c)
+
+Create a new variable called `vote_history` and store the individual-level propensity to vote by computing the proportion of turnout for each person between 2006 and 2012 (use `voted06`, `voted08`, `voted10`, and `voted12`).
+
+Then, determine the average past turnout in the state according to this measure by computing the mean of `vote_history`. Create a second new variable that indicates people with lower than average turnout in the Florida data.
+
+## Answer 2(c)
+
+```{r Q2c}
+fl2 <- fl %>% 
+  group_by(id) %>% 
+  mutate(vote_history = sum(voted06, voted08, voted10, voted12)/4) 
+
+flmean <- fl2 %>% 
+  ungroup() %>% 
+  summarize(mean = mean(vote_history))
+
+fl3 <- fl2 %>% 
+  mutate(lower = ifelse(vote_history < flmean$mean, 1, 0))
+
+fl3 %>% 
+  select(id, vote_history, lower)
+```
+
+The average past turnout in the state according to a voter's voter history is `r flmean`.
+
+## Question 2(d)
+
+Estimate the average treatment effects for (1) those with lower past turnout than average in the state and (2) those with past turnout greater than or equal to the average in the state. Which effect is larger? Does this support your hypothesis from Question 2(b)?
+
+## Answer 2(d)
+
+```{r Q2d}
+fl3 %>% 
+  group_by(lower, treat) %>% 
+  summarize(mean = mean(voted14))
+```
+
+Regardless of whether or not the participant has a lower level of voter turnout than the average for the state, the treatment makes the mean turnout for 2014 higher than the control group's mean turnout. This supports my hypothesis because it shows that the treatment can possibly actively increase turnout.
+
+## Question 2(e)
+
+What do these results suggest about the ability of social-pressure based GOTV efforts to turn out voters who have not voted in the past?
+
+## Answer 2(e)
+
+The results suggest that there is a social pressure to participate more actively in politics, most likely in order to gain respect as an individual civic agent in society, such that when reminded of it, an individual is influenced to consider voting more often—hence, the 2014 election's higher voter turnout.
+
+## Question 2(f)
+
+Estimate the difference in treatment effects for (1) men versus women and (2) people whose age is young versus middle versus older (18--29, 30-64 and 65+). Briefly interpret the result.
+
+## Answer 2(f)
+
+```{r Q2f}
+fl3 %>% 
+  select(id, treat, female, voted14) %>% 
+  group_by(female, treat) %>%
+  summarize(mean = mean(voted14), .groups = "keep") %>% 
+  mutate(treat = ifelse(treat == 1, "Treated", "Control")) %>% 
+  pivot_wider(names_from = treat, values_from = mean) %>% 
+  mutate(diff = Treated - Control)
+
+fl3 %>% 
+  select(id, treat, age, voted14) %>% 
+  mutate(young = ifelse(age < 30, 1, 0),
+         middle = ifelse(age > 29 & age < 65, 1, 0),
+         older = ifelse(age > 64, 1, 0)) %>% 
+  group_by(young, middle, older, treat) %>%
+  summarize(mean = mean(voted14), .groups = "keep") %>% 
+  mutate(treat = ifelse(treat == 1, "Treated", "Control")) %>% 
+  pivot_wider(names_from = treat, values_from = mean) %>% 
+  mutate(diff = Treated - Control)
+```
+
+For gender, the treatment increased both observed genders' voter performances by 1.78% for male voters and 1.31% for female voters. For age groups, the treatment increased all observed gender groups' voter performances by 2.48% for young voters, 0.93% for middle-aged voters, and 1.82% for older voters. 
+
+# Question 3: Optional Challenge Question
+
+In the experiment conducted in 2014, the subjects' party registration statuses were not available. Suppose you would like to learn whether untargeted efforts at boosting turnout in Florida through the social pressure mailing helped the prospects of the Democratic Party or the Republican Party overall. Use the survey results from the CCES conducted in Florida to predict who leans towards the Republican party based on age, gender, race, and marital status. You may use stated party leanings (based on the variable `pid3`) as the outcome. Then, make predictions about who is likely to vote Republican (versus Democrat or Independent) in the experimental sample and calculate treatment effects for these groups. What do you find?
+
+## Answer 3
+
+```{r Q3}
+fl_cces <- fl_cces %>% 
+  mutate(rep = ifelse(pid3 == "R", 1, 0)) 
+
+fm <- rep ~ age + I(age^2) + female + factor(race) + married
+
+model <- glm(fm, data = fl_cces, 
+             family = "binomial", na.action = na.exclude)
+
+# tidy(model)
+
+fl_cces$predict <- predict(model, newdata = fl_cces, type = "response")
+
+nc.roc <- roc(response = fl_cces$rep,
+              predictor = fl_cces$predict)
+
+threshold <- coords(roc = nc.roc, x = "best", transpose = TRUE,
+                    ret = c("threshold", "accuracy", "precision", "recall"))
+
+fl$predict <- predict(model, newdata = fl, type = "response")
+
+fl <- fl %>% 
+  mutate(rep_test = ifelse(predict > threshold[1], "R", "NR"))
+
+# fl_q3 <- fl %>%
+#   group_by(rep_test, treat) %>%
+#   summarize(pct = n()/nrow(fl)) 
+# 
+# fl_q3 %>% 
+#   mutate(treat = ifelse(treat == 1, "Treated", "Control")) %>% 
+#   pivot_wider(names_from = treat, values_from = pct) %>% 
+#   mutate(diff = Treated - Control)
+
+tibble(
+  group = c("All in Sample", "Not Republican", "Republicans"),
+  control = c(mean(fl$voted14[fl$treat == 0], na.rm = TRUE),
+              mean(fl$voted14[fl$rep_test == "NR" & fl$treat == 0], 
+                   na.rm = TRUE),
+              mean(fl$voted14[fl$rep_test == "R" & fl$treat == 0], 
+                   na.rm = TRUE)),
+  treatment = c(mean(fl$voted14[fl$treat == 1], na.rm = TRUE),
+              mean(fl$voted14[fl$rep_test == "NR" & fl$treat == 1], 
+                   na.rm = TRUE),
+              mean(fl$voted14[fl$rep_test == "R" & fl$treat == 1], 
+                   na.rm = TRUE))
+) %>%
+  mutate(control = round(control, digits = 4) * 100,
+         treatment = round(treatment, digits = 4) * 100,
+         difference = treatment - control)
+```
+
