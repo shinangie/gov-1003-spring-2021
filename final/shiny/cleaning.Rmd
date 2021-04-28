@@ -1,0 +1,70 @@
+---
+title: "cleaning"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(janitor)
+
+load("pre.rda")
+pre_raw <- da37024.0001 %>% 
+  clean_names() 
+
+pre <- pre_raw %>% 
+  select(id = respid, 
+         wgt = pweight, 
+         ethnicity = raceeth, 
+         racegroup = race,
+         state = rstate,
+         gender = s7,
+         education = s8,
+         nativity1 = q1_3a,
+         nativity2 = q1_3b,
+         legality = q1_4,
+         income1 = q8_15,
+         income2 = q8_16,
+         age1 = s5a,
+         age2 = q8_19,
+         reg = q4_1,
+         votepred = q4_5e,
+         party = q7_1,
+         partycloser1 = q7_4a,
+         partycloser2 = q7_4b,
+         favorbo = q4_11c,
+         favordt = q4_11d,
+         favorhc = q4_11e)
+
+load("post.rda")
+post_raw <- da37380.0001 %>% 
+  clean_names()
+
+post <- post_raw %>% 
+  select(id = respid,
+         wgt = nweightnativity,
+         ethnicity = s10_1,
+         racegroup = race,
+         state = rstate,
+         gender = s7,
+         education = s8,
+         nativity1 = q1_3a,
+         nativity2 = q1_3b,
+         legality = q1_4,
+         income1 = q10_15,
+         income2 = q10_16,
+         age1 = age2,
+         age2 = q10_19,
+         reg = q2_3,
+         vote = q2_4,
+         voteres = q2_4a,
+         party = pid4,
+         partycloser1 = q10_0d,
+         partycloser2 = q10_0e,
+         favorbo = q2_2c,
+         favordt = q2_2a,
+         favorhc = q2_2b)
+
+write_csv(pre, "pre.csv")
+write_csv(post, "post.csv")
+```

@@ -70,7 +70,6 @@ share <- round(count/nrow(nc_cces)*100)
 
 Define a new indicator variable in `nc_cces` called `obama_trump` that takes `1` if a respondent voted for Barack Obama in 2012 and switched to Donald Trump in 2016, and takes `0` otherwise.
 
-
 ## Answer 1(b)
 ```{r Q1b}
 new <- nc_cces %>% 
@@ -81,7 +80,6 @@ new <- nc_cces %>%
 
 How do "Obama-Trump" voters in the CCES sample compare to the other survey respondents in terms of age, family income, and having a college education?
 Compare the two group in terms of the mean of age (`age`), the mean of family income (`familyincome`), and the proportion of college graduates (`college_grad_prob`). 
-
 
 ## Answer 1 (c)
 ```{r Q1c}
@@ -98,11 +96,10 @@ new %>%
 How do "Obama-Trump" voters in this sample compare to other survey respondents in terms of their stated partisan identification? (Hint: Look at variable `pid3`.) 
 Report your answer  as a share of the voters in each group (i.e., Democrats comprise XX% of all Obama-Trump voters, Republicans comprise XX% of all Obama-Trump voters, and so on). (Hint: You might want to use the `table()` and `prop.table()` functions.)
 
-
 ## Answer 1(d)
 ```{r Q1d,, fig.width=7, fig.height=4.5, fig.align='center'}
 with(new, table(obama_trump, pid3)) %>% 
-  prop.table()
+  prop.table(., 1)
 ```
 
 # Question 2: Turnout Model with Logistic Regression
@@ -114,12 +111,15 @@ Suppose we examined a simple model of turnout using logistic regression that too
 ```{r turnout model}
 ## formula 
 fm <- voted2014 ~ voted2008 + voted2010 + voted2012 +
-        age + I(age^2) + factor(party) + log(familyincome+1)+ 
+        age + I(age^2) + factor(party) + log(familyincome + 1) + 
         factor(density) + homeowner_score + married_prob + factor(socioecon_bg)
 
 ## estimate model (logistic regression)
-model <- glm(fm, data = nc, subset= id %in% train_id,
-             family = "binomial", na.action = na.exclude)
+model <- glm(fm, 
+             data = nc, 
+             subset = id %in% train_id,
+             family = "binomial", 
+             na.action = na.exclude)
 ```
 
 ## Question 2(a)
@@ -128,7 +128,7 @@ What is the theoretical basis for including past voter behavior in a model of vo
 
 ## Answer 2(a)
 
-_Insert answer here._
+The purpose of modeling is to observe as much behavior as possible to understand trends and their causes. Therefore, in order to model voter turnout, we must observe as much past voter behavior as possible to learn specific patterns and their variability in specific actors, and improve our chances at predicting more and more accurate future voter turnout.
 
 ## Question 2(b)
 
@@ -136,7 +136,7 @@ You can explore the estimates from the model by typing `summary(model)` in the c
 
 ## Answer 2(b)
 
-_Insert answer here._
+The main logic is that there are theoretical reasons to think that the relationship between age and turnout is not linear. Specifically, while we know that generally speaking as people get older, they are more likely to participate in politics -- we also think that as people get really really old, their participation begins to decline again. For example, people in retirement homes in poor health (say 85+ years old) are probably less likely to participate than a typical 65 year old). Having the square term allows you to have a model where turnout is increasing in age, but there is some age which predicts maximum turnout and then after that it starts declining again (imagine an upside down parabola). 
 
 ## Question 2(c)
 
@@ -145,9 +145,18 @@ Use the model to produce a predicted probability of turnout for each person in b
 ## Answer 2(c)
 
 ```{r Q2c}
-#Insert answer here
+yhat <- predict(model, 
+                newdata = nc,
+                type = "response")
 
+yhat_data <- tibble(id = nc$id, 
+                    tf = nc_split,
+                    split = ifelse(nc_split == TRUE, "train", "test"), 
+                    yhat = yhat,
+                    result = nc$voted2014)
 
+ggplot(yhat_data, aes(x = yhat)) + 
+  geom_histogram()
 ```
 
 
@@ -174,17 +183,24 @@ plot(nc.roc,
      ylab = "True Positive Rate or Sensitivity",
      main = "ROC Curve (Vendor Model)",
      legacy.axes = TRUE)
-
 ```
 
 ### Create an ROC curve for the predictions from _our_ model of voter turnout. Assign it to an object called `nc.roc2` and then use the `plot()` function to visualize the ROC curve.
 
-
 ## Answer 2(d)
 
 ```{r Q2d, message=FALSE, warning=FALSE}
-#Insert answer here
+# compute roc curve 
+nc.roc2 <- roc(
+  response  = yhat_data$result[nc$id %in% test_id],
+  predictor = yhat_data$yhat[nc$id %in% test_id])
 
+# plot the ROC curve
+plot(nc.roc2, 
+     xlab = "False Positive Rate or 1-Specificity",
+     ylab = "True Positive Rate or Sensitivity",
+     main = "ROC Curve (Our Model)",
+     legacy.axes = TRUE)
 ```
 
 ## Question 2(e)
@@ -193,18 +209,21 @@ A variety of methods can be used to determine the threshold for predicting someo
 
 ```{r, eval=FALSE}
 # calculate the best threshold
-threshold <- coords(roc = nc.roc2, x = "best", best.weights = c(.5, .6), transpose = TRUE,
+threshold <- coords(roc = nc.roc, x = "best", best.weights = c(.5, .6), transpose = TRUE,
                     ret = c("threshold", "accuracy", "precision", "recall"))
+threshold
 ```
 
 Apply the optimal threshold determined with the above code to the out-of-sample predictions made for the test set. Create a 2x2 table showing the number of false positives, false negatives, true positives and true negatives.
 
-
 ## Answer 2(e)
 
 ```{r roc_curve_coords, warning=FALSE, message=FALSE}
-# Insert answer here.
+yhat_data <- yhat_data %>% 
+  mutate(threshold = ifelse(yhat > threshold[1], 1, 0))
 
+table(threshold = yhat_data$threshold[nc$id %in% test_id], 
+      result = yhat_data$result[nc$id %in% test_id])
 ```
 
 ## Question 2(f)
@@ -213,7 +232,7 @@ In the context of predicting voter turnout, is it more important for a campaign 
 
 ## Answer 2(f)
 
-_Insert answer here._
+It's more important for a campaign to avoid False Positives, because it actively hurts their campaign more to lose voters unexpectedly than to gain voters unexpectedly.
 
 
 # Question 3: Turnout Model with Penalized Logistic Regression
@@ -226,13 +245,13 @@ What are the trade-offs between including more variables (and even interactions 
 
 ## Answer 3(a)
 
-_Insert answer here._
+Including too many variables runs the risk of visualizing too much information for the model to have any particularly insightful message or pointedly nuanced impact. Including too few variables runs the risk of not capturing variables that actually matter more to the model than the variables that end up getting included. 
 
 ## Question 3(b)
 
 One way to help with variable selection, so that we can consider but not necessarily include a wide range of covariates, is to implement a penalized regression, known as a LASSO model. The lasso model forces the sum of the absolute value of the coefficients in the model to be below a fixed value (called `lambda`), which leads to setting some of the coefficients to zero. The effect is to omit some variables from the model when making predictions, leading to a sparser model.
 
-But in order to do this, we need to be able to pick a good value for `lambda`. We use a method called cross-validation. We split the data into, say, 10 different pieces and then try running our model with different values of lambda on them. We can then evaluate what value for `labmda` allows us to minimize the errors in our predictions.
+But in order to do this, we need to be able to pick a good value for `lambda`. We use a method called cross-validation. We split the data into, say, 10 different pieces and then try running our model with different values of lambda on them. We can then evaluate what value for `lambda` allows us to minimize the errors in our predictions.
 
 The `glmnet` package in R helps us to fit a lasso model, and it even performs cross-validation for us. The code below walks through an example for fitting a penalized logistic regression to our NC voter data.
 
@@ -282,9 +301,9 @@ cv_lasso <- cv.glmnet(X_train, y_train, alpha = 1, family = "binomial")
 model2 <- glmnet(X_train, y_train, alpha = 1, family = "binomial",
                  lambda = cv_lasso$lambda.min)
 
-
 # see which variables were actually included in model
 est_coefs <- as.matrix(coef(model2))
+est_coefs
 # knitr::kable(est_coefs[est_coefs[,1] != 0, ], digits = 3,
 #              col.names = c("Coefficients"))
 ```
@@ -310,13 +329,11 @@ rownames_to_column(data.frame(est_coefs), "Variables") %>%
 
 ## Answer 3(b)
 
-_Insert answer here._
-
+The further away the coefficients are from the red line (the zero value), the more impactful they are to the model. The most impactful variables have to do with elevating social capital like voting history, college education, and marriage probability. Unexpectedly, Muslim and Middle Eastern variables are also among the strongly presenting variables. 
 
 ## Question 3(c)
 
-Does this approach yield improvements in out-of-sample prediction, compared to the approach taken in Question Two? We investigate the performance of this penalized logistic regression by computing the ROC curve 
-and classification accuracy.
+Does this approach yield improvements in out-of-sample prediction, compared to the approach taken in Question Two? We investigate the performance of this penalized logistic regression by computing the ROC curve and classification accuracy.
 
 ### Setup 
 
@@ -339,8 +356,14 @@ yhat_lasso_test <- predict(model2, newx = X_test, type = "response")
 ## Answer 3(c)
 
 ```{r, warning=FALSE,message=FALSE}
-#Insert Answer Here
+nc.roc5 <- roc(response = y_test,
+               predictor = as.numeric(yhat_lasso_test))
 
+thres_data <- tibble(threshold = ifelse(as.numeric(yhat_lasso_test) > thres_lasso[1], 1, 0),
+                     result = y_test)
+
+table(threshold = thres_data$threshold, 
+      result = thres_data$result)
 ```
 
 ## Question 3(d) **Optional** Challenge
@@ -365,9 +388,23 @@ party_model_variables <- c(
 ## Answer 3(d)
 
 ```{r Q3d}
-#Insert answer here
+nc_clean_3d <- na.omit(nc[, c("id", party_model_variables)])
 
+row_train_3d <- which(nc_clean_3d$id %in% train_id)
+row_test_3d  <- which(nc_clean_3d$id %in% test_id)
 
+X_3d <- model.matrix(dem ~., data = nc_clean_3d)[,-c(1,2)]
+
+X_3d_train <- X[row_train,]
+y_3d_train <- nc_clean_3d$dem[row_train]
+X_3d_test <- X[row_test,]
+y_3d_test <- nc_clean_3d$dem[row_test]
+
+set.seed(02139)
+cv_lasso_3d <- cv.glmnet(X_3d_train, y_3d_train, alpha = 1, family = "binomial")
+
+model_3d <- glmnet(X_3d_train, y_3d_train, alpha = 1, family = "binomial",
+                   lambda = cv_lasso_3d$lambda.min)
 ```
 
 ## Question 3(e) **Optional** Challenge
@@ -375,8 +412,14 @@ party_model_variables <- c(
 In the training data set, determine a threshold for classifying someone as a Democrat using an ROC curve and the `coords` function. Explain why you chose this threshold.
 
 ```{r Q3e, warning=FALSE, message=FALSE}
-#Insert answer here
+yhat_lasso_train_3d <- predict(model_3d, newx = X_3d_train, type = "response")
+# est_coefs_3d <- as.matrix(coef(model_3d))
 
+nc.roc_3d <- roc(response  = y_3d_train,
+                 predictor = as.numeric(yhat_lasso_train_3d))
+
+thres_lasso_3d <- coords(nc.roc_3d, x = "best", transpose = TRUE,
+                         ret = c("threshold","accuracy","precision","recall"))
 ```
 
 ## Question 3(f) **Optional** Challenge
@@ -386,8 +429,18 @@ Make the out-of-sample prediction of whether someone is a Democrat in the test d
 ## Answer 3(f)
 
 ```{r Q3f}
-#Insert answer here
+tibble_3d <- tibble(id = nc_clean_3d$id[row_train_3d], 
+                    yhat = yhat_lasso_train_3d,
+                    result = nc_clean_3d$dem[row_train_3d]) %>% 
+  mutate(threshold = ifelse(yhat > thres_lasso_3d[1], 1, 0))
 
+yhat_lasso_test_3d <- predict(model_3d, newx = X_3d_test, type = "response")
+
+nc.roc_3d2 <- roc(response = y_3d_test,
+                  predictor = as.numeric(yhat_lasso_test_3d))
+
+table(threshold = tibble_3d$threshold[nc_clean_3d$id %in% test_id], 
+      result = tibble_3d$result[nc_clean_3d$id %in% test_id])
 ```
 
 # Question 4: **Optional** Challenge Question
@@ -397,8 +450,8 @@ Suppose you are once again working for Richard Burr (R-NC), a senator from North
 ## Question 4(a)
 
 Use the `voted_pres16` variable in the CCES survey as your outcome, and create a model assessing the relationship between a vote for Trump and age, gender, party, race, family income, college graduate status, and marital status.
-Report estimated coefficients, and briefly interpret the estimates.
 
+Report estimated coefficients, and briefly interpret the estimates.
 
 ## Answer 4(a)
 
