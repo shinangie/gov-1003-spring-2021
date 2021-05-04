@@ -1,0 +1,12 @@
+name: gov1003
+title: gov1003
+username:
+account: angieshin
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4042806
+bundleId: 4530872
+url: https://angieshin.shinyapps.io/gov1003/
+when: 1619627483.17373
+asMultiple: FALSE
+asStatic: FALSE

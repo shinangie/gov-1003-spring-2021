@@ -116,8 +116,7 @@ post <- post_raw %>%
          ma4 = q5_2_d,
          ma5 = q5_2_e,
          ma6 = q5_2_f,
-         ma7 = q5_2_g,
-         identity = q4_101)
+         ma7 = q5_2_g)
 
 write_csv(pre, "pre.csv")
 write_csv(post, "post.csv")
@@ -173,7 +172,7 @@ There were multiple versions of the income and age variables to provide enough l
 From the Pre-Election survey, I examined the following additional variables:
 
 * "reg" 
-    + Respondent's state of voter registration
+    + Respondent's state of voter Registration
 * "votepred" 
     + Respondent's intended candidate of choice for the 2016 Presidential Election
 * "votelead" 
@@ -217,82 +216,43 @@ From the Pre-Election survey, I examined the following additional variables:
 
 ## Post-Election Survey
 
-* "reg"
-    + Respondent's state of voter registration
-* "vote"
-    + Respondent's state of voting
-* "voteres"
-    + Respondent's voted candidate of choice for the 2016 Presidential Election
-* "party"
-    + Respondent's political party affiliation
-* "partycloser1"
-    + Respondent's closeness with the Republican or the Democratic party
-* "partycloser2"
-    + Respondent's closeness with the Republican or the Democratic party based on party standing with political issues
-* "favorbo"
-    + Respondent's stance of favor with Barack Obama
-* "favordt"
-    + Respondent's stance of favor with Donald Trump
-* "favorhc"
-    + Respondent's stance of favor with Hillary Clinton
-* "contact1"
-    + Respondent's status of receiving contact from campaign organizations about the election
-* "contact2"
-    + Respondent's status of receiving contact from nonpartisan organizations about the election
-* "e1"
-    + Respondent's policy view of the following: "The federal government should do more to reduce income differences between the richest and poorest households"
-* "e2"
-    + Respondent's policy view of the following: "The federal government should do more to regulate banks."
-* "e3"
-    + Respondent's policy view of the following: "The federal government should raise the minimum wage to allow every working American a decent standard of living."
-* "e4"
-    + Respondent's policy view of the following: "The federal government should increase income taxes on people making over a million dollars a year."
-* "e5"
-    + Respondent's policy view of the following: "The federal government should do more to discourage big American companies from hiring foreign workers to replace workers in the U.S."
-* "e6"
-    + Respondent's policy view of the following: "The federal government should enact major new spending that would help undergraduates pay tuition at public colleges without needing loans."
-* "i1"
-    + Respondent's policy view of the following: "Undocumented or illegal immigrants should be allowed to have an opportunity to eventually become U.S. citizens."
-* "i2"
-    + Respondent's policy view of the following: "Congress needs to increase the number of work visas it issues every year."
-* "i3"
-    + Respondent's policy view of the following: "Congress needs to increase the number of family visas it issues every year."
-* "i4"
-    + Respondent's policy view of the following: "States should provide driver's licenses to all residents, regardless of their immigration status."
-* "mi1"
-    + Respondent's experience of the following microaggression: "You are treated with less courtesy or respect than other people."
-* "mi2"
-    + Respondent's experience of the following microaggression: "You receive poorer service than other people at restaurants or stores."
-* "mi3"
-    + Respondent's experience of the following microaggression: "People act as if you don't speak English."
-* "mi4"
-    + Respondent's experience of the following microaggression: "People act as if they are afraid of you."
-* "mi5"
-    + Respondent's experience of the following microaggression: "People act as if they're better than you are."
-* "mi6"
-    + Respondent's experience of the following microaggression: "You are called names or insulted."
-* "mi7"
-    + Respondent's experience of the following microaggression: "You are threatened or harassed."
-* "mi8"
-    + Respondent's experience of the following microaggression: "People mispronounce your name."
-* "mi9"
-    + Respondent's experience of the following microaggression: "People assume you are good at math and science."
-* "ma1"
-    + Respondent's experience of the following macroaggression: "Have you ever been unfairly denied a promotion?"
-* "ma2"
-    + Respondent's experience of the following macroaggression: "Have you ever been unfairly fired from a job?"
-* "ma3"
-    + Respondent's experience of the following macroaggression: "For unfair reasons, do you think you have ever not been hired for a job?"
-* "ma4"
-    + Respondent's experience of the following macroaggression: "Have you ever been unfairly stopped, searched, questioned, physically threatened or abused by the police?"
-* "ma5"
-    + Respondent's experience of the following macroaggression: "Do you think you have ever been unfairly prevented from moving into a neighborhood?"
-* "ma6"
-    + Respondent's experience of the following macroaggression: "Have you ever moved into a neighborhood where neighbors made life difficult for you or your family?"
-* "ma7"
-    + Respondent's experience of the following macroaggression: "Have you ever been denied entry into a religious institution?"
-* "identity"
-    + Respondent's self-reflection as a member of the AAPI community
+reg = q2_3,
+         vote = q2_4,
+         voteres = q2_4a,
+         party = pid4,
+         partycloser1 = q10_0d,
+         partycloser2 = q10_0e,
+         favorbo = q2_2c,
+         favordt = q2_2a,
+         favorhc = q2_2b,
+         contact1 = q2_6,
+         contact2 = q2_7,
+         e1 = q3_6_a,
+         e2 = q3_6_b,
+         e3 = q3_6_c,
+         e4 = q3_6_d,
+         e5 = q3_6_f,
+         e6 = q3_6_g,
+         i1 = q5_8_a,
+         i2 = q5_8_b,
+         i3 = q5_8_c,
+         i4 = q5_8_d,
+         mi1 = q5_1_b,
+         mi2 = q5_1_c,
+         mi3 = q5_1_d,
+         mi4 = q5_1_e,
+         mi5 = q5_1_g,
+         mi6 = q5_1_h,
+         mi7 = q5_1_i,
+         mi8 = q5_1_j,
+         mi9 = q5_1_k,
+         ma1 = q5_2_a,
+         ma2 = q5_2_b,
+         ma3 = q5_2_c,
+         ma4 = q5_2_d,
+         ma5 = q5_2_e,
+         ma6 = q5_2_f,
+         ma7 = q5_2_g
 
 # Results
 
