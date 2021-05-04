@@ -12,11 +12,21 @@ Asian Americans have been the most quickly growing racial demographic in the Uni
 
 The National Asian American Survey (NAAS) is a scientific and nonpartisan effort to poll the opinions of Asian Americans and Pacific Islanders. Its significance lies in their careful measurement of ethnicities beyond the monolithic "Asian" label that the vast majority of public opinion surveys have normalized, when finding public opinion results at an ethnically granular level can actually reveal important lessons about the AA communities and experiences. This project will concern the 2016 public opinion surveys that the NAAS has organized before and after the 2016 presidential election, to measure AA political opinions intentionally and spotlight them in a deliberately academic manner in order to help close the gap in research and academia on AA experiences. The purpose of this project specifically will involve the socioeconomic standing of survey respondents, to investigate how income level and socioeconomic status affects AA experiences and policy views. 
 
-# Dataset
+# Survey Information and Variables
 
 The 2016 National Asian American Survey is composed of two waves. Individual-level data from the Fall 2016 National Asian American Survey (pre-election) was fielded from August through October 2016. Individual-level data from the NAAS 2016 Post-Election Survey was fielded from November 2016 through February 2017. For both surveys, the NAAS collaborated with Catalist, a for-profit corporation based in Washington, D.C. that operates a voter database and provides data and data-related services to progressive organizations, to utilize registered voter and commercial vendor samples; these were classified according to a variety of ethnicity variables. The 2016 NAAS Pre-Election Survey conducted 2,238 telephone interviews to AAPI adults (respondents were required to be 18 years of age or older to proceed with the survey) between August 10 and September 29, 2016. The 2016 NAAS Post-Election Survey conducted 4,393 telephone interviews to AAPI adults (respondents were required to be 18 years of age or older to proceed with the survey) between November 10, 2016 and March 2, 2017. The variable codebook and survey questionnaire for the Pre-Election survey are available [here](https://github.com/shinangie/gov1003/tree/main/final/data/ICPSR_37024/DS0001), and the variable codebook and survey questionnaire for the Post-Election survey are available [here](https://github.com/shinangie/gov1003/tree/main/final/data/ICPSR_37380/DS0001). Both datasets are available at the Resource Center for Minority Data, curated by ICPSR. 
 
 ```{r setup, include=F}
+
+# =====
+
+# READ BELOW
+# 
+# SET INCLUDE AND ECHO TO TRUE IN ORDER TO PROCEED WITH A FULL KNIT
+# OTHERWISE, KEEP BOTH AT FALSE IN ORDER TO MEASURE PRECISE PAGE LENGTH
+
+# =====
+
 knitr::opts_chunk$set(include=F, echo=F)
 library(tidyverse)
 library(janitor)
@@ -151,7 +161,7 @@ pre_aa <- pre %>%
          votepred = case_when(votepred == "(1) Clinton" ~ "HC",
                               votepred == "(2) Trump" ~ "DT"),
          media1 = case_when(media1 == "(1) RETHNIC: or Asian American more" ~ "AA",
-                            media1 == "(2) Mainstream American more" ~ "AM",
+                            media1 == "(2) Mainstream American more" ~ "US",
                             media1 == "(3) DO NOT READ  Both equally" ~ "Both")) %>% 
   filter(!is.na(income2))
 
@@ -169,7 +179,7 @@ post_aa <- post %>%
                                               .x == "(4) Somewhat disagree" ~ "Disagree",
                                               .x == "(5) Strongly disagree" ~ "Strong Disagree")) %>% 
   mutate_at(vars(e1, e2, e3, e4, e5, e6,
-                 i1, i2, i3, i4), ~ factor(.x, levels = c("Srong Agree", "Agree", "Neutral",
+                 i1, i2, i3, i4), ~ factor(.x, levels = c("Strong Agree", "Agree", "Neutral",
                                                           "Disagree", "Strong Disagree"))) %>% 
   mutate_at(vars(favorhc, favordt), ~ case_when(.x == "(1) Very unfavorable" ~ "Negative",
                                                 .x == "(2) Somewhat unfavorable" ~ "Negative",
@@ -367,7 +377,7 @@ From the Pre-Election survey, I examined the following additional variables:
 * "identity"
     + Respondent's self-reflection as a member of the AAPI community
 
-# Results
+# Data
 
 ## The 2016 Election
 
@@ -387,7 +397,7 @@ post_aa %>%
   coord_flip()
 ```
 
-In the Pre-Election and Post-Election surveys, Chinese, Korean, and Indian respondents
+First, we will look at party affiliation. In the Pre-Election survey, the percentage of Democrats increased with decreasing annual income brackets for respondents reporting Chinese, Korean, or Indian ethnicities; the percentage of Democrats increased with increasing annual income brackets for respondents reporting Japanese ethnicities; the percentage of Democrats was the highest in the middle annual income bracket for respondents reporting Cambodian or Vietnamese ethnicities; finally, the percentage of Democrats was the lowest in the middle annual income bracket for respondents reporting Filipino or Hmong ethnicities. In the Post-Election survey, the percentage of Democrats increased with decreasing annual income brackets for respondents reporting Korean ethnicities; the percentage of Democrats increased with increasing annual income brackets for respondents reporting Chinese or Vietnamese ethnicities; the percentage of Democrats was the highest in the middle annual income bracket for respondents reporting Cambodian, Filipino, Hmong, or Japanese ethnicities; finally, the percentage of Democrats was the lowest in the middle annual income bracket for respondents reporting Indian ethnicities. 
 
 ```{r candidate favors}
 pre_aa %>% 
@@ -419,12 +429,32 @@ post_aa %>%
   coord_flip()
 ```
 
+Next, we will look at candidate favorability—starting with the 2016 Democratic Nominee, Hillary Clinston. In the Pre-Election survey, the percentage of Clinton favorers increased with decreasing annual income brackets for respondents reporting Chinese, Korean, Filipino, or Hmong ethnicities; the percentage of Clinton favorers increased with increasing annual income brackets for respondents reporting Vietnamese ethnicities; the percentage of Clinton favorers was the highest in the middle annual income bracket for respondents reporting Cambodian ethnicities; finally, the percentage of Clinton favorers was the lowest in the middle annual income bracket for respondents reporting Japanese or Indian ethnicities. In the Post-Election survey, the percentage of Clinton favorers increased with decreasing annual income brackets for respondents reporting Korean or Indian ethnicities; the percentage of Clinton favorers increased with increasing annual income brackets for respondents reporting Cambodian ethnicities; the percentage of Clinton favorers was the highest in the middle annual income bracket for respondents reporting Japanese, Vietnamese, or Hmong ethnicities; finally, the percentage of Clinton favorers was the lowest in the middle annual income bracket for respondents reporting Chinese or Filipino ethnicities. 
+
+Now, we will look at candidate favorability with the 2016 Republican Nominee, Donald Trump. In the Pre-Election survey, the percentage of Trump unfavorers increased with increasing annual income brackets for respondents reporting Chinese, Korean, Japanese, or Hmong ethnicities; the percentage of Trump unfavorers was the highest in the middle annual income bracket for respondents reporting Cambodian or Vietnamese ethnicities; finally, the percentage of Trump unfavorers was the lowest in the middle annual income bracket for respondents reporting Filipino or Indian ethnicities. In the Post-Election survey, the percentage of Trump unfavorers increased with increasing annual income brackets for respondents reporting Cambodian, Filipino, Korean, Indian, or Vietnamese ethnicities, while the percentage of Trump unfavorers was the highest in the middle annual income bracket for respondents reporting Japanese, Chinese, or Hmong ethnicities. 
+
 ```{r prez vote}
+pre_aa %>% 
+  filter(!is.na(votepred)) %>% 
+  ggplot(aes(income2, fill = votepred)) +
+  geom_bar(position="fill") +
+  facet_wrap(~ ethnicity) +
+  labs(title = "Pre-Election Survey: Vote Predictions") +
+  coord_flip()
+
 pre_aa %>% 
   ggplot(aes(income2, fill = votepred)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
   labs(title = "Pre-Election Survey: Vote Predictions") +
+  coord_flip()
+
+post_aa %>% 
+  filter(!is.na(voteres)) %>% 
+  ggplot(aes(income2, fill = voteres)) +
+  geom_bar(position="fill") +
+  facet_wrap(~ ethnicity) +
+  labs(title = "Post-Election Survey: Vote Results") +
   coord_flip()
 
 post_aa %>% 
@@ -435,26 +465,51 @@ post_aa %>%
   coord_flip()
 ```
 
+To continue with candidate views, we'll observe how vote predictions led to vote results, specifically concerning Hillary Clinton. In the Pre-Election survey, the percentage of Clinton voters increased with decreasing annual income brackets for respondents reporting Cambodian or Vietnamese ethnicities, while the percentage of Clinton voters was the lowest in the middle annual income bracket for respondents reporting Chinese, Filipino, Hmong, Indian, Japanese, or Korean ethnicities. In the Post-Election survey, the percentage of Clinton voters increased with decreasing annual income brackets for respondents reporting Hmong or Chinese ethnicities; the percentage of Clinton voters was the highest in the middle annual income bracket for respondents reporting Japanese or Vietnamese ethnicities; finally, the percentage of Clinton voters was the lowest in the middle annual income bracket for respondents reporting Cambodian, Filipino, Korean, or Indian ethnicities. 
+
+Next, we'll observe how vote predictions led to vote results, specifically concerning Donald Trump. In the Pre-Election survey, the percentage of Trump voters increased with increasing annual income brackets for respondents reporting Cambodian or Vietnamese, while the percentage of Trump voters was the highest in the middle annual income bracket for respondents reporting Chinese, Filipino, Hmong, Indian, Japanese, or Korean ethnicities. In the Post-Election survey, the percentage of Trump voters increased with increasing annual income brackets for respondents reporting Chinese or Hmong ethnicities; the percentage of Trump voters was the highest in the middle annual income bracket for respondents reporting Cambodian, Filipino, Hmong, Indian, or Korean ethnicities; finally, the percentage of Trump voters was the lowest in the middle annual income bracket for respondents reporting Japanese or Vietnamese ethnicities. 
+
 ```{r voter contact}
+post_aa %>% 
+  filter(!is.na(contact1)) %>% 
+  ggplot(aes(income2, fill = contact1)) +
+  geom_bar(position="fill") +
+  facet_wrap(~ ethnicity) +
+  labs(title = "Post-Election Survey: Voter Contact from Campaigns") +
+  coord_flip()
+
 post_aa %>% 
   ggplot(aes(income2, fill = contact1)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
-  labs(title = "Pre-Election Survey: Voter Contact from Campaigns") +
+  labs(title = "Post-Election Survey: Voter Contact from Campaigns") +
+  coord_flip()
+
+post_aa %>% 
+  filter(!is.na(contact2)) %>% 
+  ggplot(aes(income2, fill = contact2)) +
+  geom_bar(position="fill") +
+  facet_wrap(~ ethnicity) +
+  labs(title = "Post-Election Survey: Voter Contact from Nonpartisans") +
   coord_flip()
 
 post_aa %>% 
   ggplot(aes(income2, fill = contact2)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
-  labs(title = "Pre-Election Survey: Voter Contact from Nonpartisans") +
+  labs(title = "Post-Election Survey: Voter Contact from Nonpartisans") +
   coord_flip()
 ```
 
+Finally, we'll look at whether or not respondents have received contact from campaigns or nonpartisan voter organizations about the election. For campaigns, the percentage of voter contact increased with increasing annual income brackets for respondents reporting any ethnicity except for Japanese, for which the percentage of voter contact was the highest in the middle annual income bracket. For nonpartisan voter organizations, the percentage of voter contact increased with decreasing annual income brackets for respondents reporting Hmong or Indian ethnicities; the percentage of voter contact increased with increasing annual income brackets for respondents reporting Chinese or Vietnamese ethnicities; the percentage of voter contact was the highest in the middle annual income bracket for respondents reporting Cambodian, Japanese, or Korean ethnicities; finally, the percentage of voter contact was the lowest in the middle annual income bracket for respondents reporting Filipino ethnicities.
+
 ## Policy Views
+
+### Pre-Election Survey
 
 ```{r pre policies}
 pre_aa %>% 
+  filter(!is.na(p1)) %>% 
   ggplot(aes(income2, fill = p1)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -463,6 +518,7 @@ pre_aa %>%
   coord_flip()
 
 pre_aa %>% 
+  filter(!is.na(p2)) %>% 
   ggplot(aes(income2, fill = p2)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -472,6 +528,7 @@ undergraduates pay tuition at public colleges without needing loans'") +
   coord_flip()
 
 pre_aa %>% 
+  filter(!is.na(p3)) %>% 
   ggplot(aes(income2, fill = p3)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -480,6 +537,7 @@ pre_aa %>%
   coord_flip()
 
 pre_aa %>% 
+  filter(!is.na(p4)) %>% 
   ggplot(aes(income2, fill = p4)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -489,6 +547,7 @@ for personal use'") +
   coord_flip()
 
 pre_aa %>% 
+  filter(!is.na(p5)) %>% 
   ggplot(aes(income2, fill = p5)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -496,7 +555,8 @@ pre_aa %>%
 'banning people who are Muslim from entering the United States'") +
   coord_flip()
 
-pre_aa %>% 
+pre_aa %>%
+  filter(!is.na(p6)) %>% 
   ggplot(aes(income2, fill = p6)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -506,6 +566,7 @@ in order to address climate change'") +
   coord_flip()
 
 pre_aa %>% 
+  filter(!is.na(p7)) %>% 
   ggplot(aes(income2, fill = p7)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -514,8 +575,25 @@ pre_aa %>%
   coord_flip()
 ```
 
+For the Affordable Care Act, the percentage of support increased with decreasing annual income brackets for respondents reporting Cambodian or Vietnamese ethnicities; the percentage of support was the highest in the middle annual income bracket for respondents reporting Indian ethnicities; finally, the percentage of support was the lowest in the middle annual income bracket for respondents reporting Chinese, Filipino, Hmong, Japanese, or Korean ethnicities. 
+
+For federal public college tuition aid, the percentage of support increased with decreasing annual income brackets for respondents reporting Filipino, Indian, Korean, or Vietnamese ethnicities, while the percentage of supportwas the lowest in the middle annual income bracket for respondents reporting Cambodian, Chinese, Japanese, and Hmong ethnicities. 
+
+For accepting Syrian refugees, the percentage of support increased with decreasing annual income brackets for respondents reporting Cambodian ethnicities; the percentage of support increased with increasing annual income brackets for respondents reporting Chinese or Korean ethnicities; the percentage of support was the highest in the middle annual income bracket for respondents reporting Filipino or Vietnamese ethnicities; finally, the percentage of support was the lowest in the middle annual income bracket for respondents reporting Hmong, Indian or Japanese ethnicities. 
+
+For legalizing recreational marijuana, the percentage of support increased with decreasing annual income brackets for respondents reporting Cambodian ethnicities; the percentage of support increased with increasing annual income brackets for respondents reporting Chinese, Filipino, or Japanese ethnicities; the percentage of support was the highest in the middle annual income bracket for respondents reporting Hmong, Korean, or Vietnamese ethnicities; finally, the percentage of support was the lowest in the middle annual income bracket for respondents reporting Indian ethnicities. 
+
+For banning Muslim immigrants, the percentage of opposition increased with decreasing annual income brackets for respondents reporting Japanese ethnicities; the percentage of opposition increased with increasing annual income brackets for respondents reporting Filipino, Hmong, Korean, or Vietnamese ethnicities; finally, the percentage of opposition was the lowest in the middle annual income bracket for respondents reporting Cambodian, Chinese, or Indian ethnicities. 
+
+For limiting power plants, the percentage of support increased with decreasing annual income brackets for respondents reporting Japanese ethnicities; the percentage of support increased with increasing annual income brackets for respondents reporting Indian ethnicities; the percentage of support was the highest in the middle annual income bracket for respondents reporting Chinese, Korean, or Filipino ethnicities; finally, the percentage of support was the lowest in the middle annual income bracket for respondents reporting Cambodian, Hmong, or Vietnamese ethnicities. 
+
+For black civil rights, the percentage of support increased with decreasing annual income brackets for respondents reporting Filipino, Korean, or Vietnamese ethnicities; the percentage of support increased with increasing annual income brackets for respondents reporting Cambodian or Japanese ethnicities; finally, the percentage of support was the highest in the middle annual income bracket for respondents reporting Chinese, Hmong, or Indian ethnicities.
+
+### Post-Election Survey
+
 ```{r post policies}
 post_aa %>% 
+  filter(!is.na(e1)) %>% 
   ggplot(aes(income2, fill = e1)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -525,6 +603,7 @@ the richest and poorest households'") +
   coord_flip()
 
 post_aa %>% 
+  filter(!is.na(e2)) %>% 
   ggplot(aes(income2, fill = e2)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -533,6 +612,7 @@ post_aa %>%
   coord_flip()
 
 post_aa %>% 
+  filter(!is.na(e3)) %>% 
   ggplot(aes(income2, fill = e3)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -542,6 +622,7 @@ to allow every working American a decent standard of living'") +
   coord_flip()
 
 post_aa %>% 
+  filter(!is.na(e4)) %>% 
   ggplot(aes(income2, fill = e4)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -550,7 +631,8 @@ post_aa %>%
 on people making over a million dollars a year'") +
   coord_flip()
 
-post_aa %>% 
+post_aa %>%
+  filter(!is.na(e5)) %>% 
   ggplot(aes(income2, fill = e5)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -561,6 +643,7 @@ to replace workers in the U.S.'") +
   coord_flip()
 
 post_aa %>% 
+  filter(!is.na(e6)) %>% 
   ggplot(aes(income2, fill = e6)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -571,6 +654,7 @@ pay tuition at public colleges without needing loans'") +
   coord_flip()
 
 post_aa %>% 
+  filter(!is.na(i1)) %>% 
   ggplot(aes(income2, fill = i1)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -580,6 +664,7 @@ to have an opportunity to eventually become U.S. citizens'") +
   coord_flip()
 
 post_aa %>% 
+  filter(!is.na(i2)) %>% 
   ggplot(aes(income2, fill = i2)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -588,6 +673,7 @@ post_aa %>%
   coord_flip()
 
 post_aa %>% 
+  filter(!is.na(i3)) %>% 
   ggplot(aes(income2, fill = i3)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -596,6 +682,7 @@ post_aa %>%
   coord_flip()
 
 post_aa %>% 
+  filter(!is.na(i4)) %>% 
   ggplot(aes(income2, fill = i4)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -605,16 +692,43 @@ regardless of their immigration status'") +
   coord_flip()
 ```
 
+#### Economic Policy
+
+For federally closing the income gap, the percentage of agreement increased with decreasing annual income brackets for respondents reporting Hmong, Indian, Japanese, Korean, or Vietnamese ethnicities; the percentage of support increased with increasing annual income brackets for respondents reporting Cambodian ethnicities; the percentage of support was the highest in the middle annual income bracket for respondents reporting Filipino ethnicities; finally, the percentage of support was the lowest in the middle annual income bracket for respondents reporting Chinese ethnicities. 
+
+For federal bank regulation, the percentage of agreement increased with decreasing annual income brackets for respondents reporting Hmong, Indian, Japanese, Korean, or Vietnamese ethnicities; the percentage of support was the highest in the middle annual income bracket for respondents reporting Cambodian or Filipino ethnicities; finally, the percentage of support was the lowest in the middle annual income bracket for respondents reporting Chinese ethnicities. 
+
+For raised minimum wage, the percentage of agreement increased with decreasing annual income brackets for respondents reporting Hmong, Indian, Japanese, Korean, or Vietnamese ethnicities; the percentage of support increased with increasing annual income brackets for respondents reporting Cambodian ethnicities; the percentage of support was the highest in the middle annual income bracket for respondents reporting Filipino ethnicities; finally, the percentage of support was the lowest in the middle annual income bracket for respondents reporting Chinese ethnicities. 
+
+For wealth income tax increases, the percentage of support increased with decreasing annual income brackets for respondents reporting Chinese, Korean, or Vietnamese ethnicities; the percentage of support was the highest in the middle annual income bracket for respondents reporting Filipino or Vietnamese ethnicities; finally, the percentage of support was the lowest in the middle annual income bracket for respondents reporting Hmong, Indian or Japanese ethnicities. 
+
+For discouraging hiring foreign workers, the percentage of support increased with decreasing annual income brackets for respondents reporting Chinese, Japanese, Korean, or Vietnamese ethnicities; the percentage of support increased with increasing annual income brackets for respondents reporting Filipino ethnicities; finally, the percentage of support was the highest in the middle annual income bracket for respondents reporting Hmong or Cambodian ethnicities.
+
+For federal public college tuition aid, the percentage of support increased with decreasing annual income brackets for respondents reporting Hmong, Japanese, or Vietnamese ethnicities; the percentage of support increased with increasing annual income brackets for respondents reporting Cambodian or Filipino ethnicities; the percentage of support was the highest in the middle annual income bracket for respondents reporting Korean or Chinese ethnicities; finally, the percentage of support was the lowest in the middle annual income bracket for respondents reporting Indian ethnicities. 
+
+#### Immigration Policy
+
+For undocumented naturalization, the percentage of support increased with decreasing annual income brackets for respondents reporting Indian ethnicities; the percentage of support increased with increasing annual income brackets for respondents reporting Cambodian, Japanese, or Vietnamese ethnicities; finally, the percentage of support was the highest in the middle annual income bracket for respondents reporting Hmong, Filipino, Korean, or Chinese ethnicities.
+
+For increased work visas, the percentage of support increased with decreasing annual income brackets for respondents reporting Hmong, Japanese, or Vietnamese ethnicities; the percentage of support increased with increasing annual income brackets for respondents reporting Cambodian or Filipino ethnicities; the percentage of support was the highest in the middle annual income bracket for respondents reporting Korean or Chinese ethnicities; finally, the percentage of support was the lowest in the middle annual income bracket for respondents reporting Indian ethnicities. 
+
+For increased family visas, the percentage of support increased with decreasing annual income brackets for respondents reporting Hmong, Japanese, or Vietnamese ethnicities; the percentage of support increased with increasing annual income brackets for respondents reporting Cambodian or Filipino ethnicities; the percentage of support was the highest in the middle annual income bracket for respondents reporting Korean or Chinese ethnicities; finally, the percentage of support was the lowest in the middle annual income bracket for respondents reporting Indian ethnicities. 
+
+For documentation-optional driver's licenses, the percentage of support increased with decreasing annual income brackets for respondents reporting Filipino or Indian ethnicities; the percentage of support increased with increasing annual income brackets for respondents reporting Cambodian or Vietnamese ethnicities; finally, the percentage of support was the highest in the middle annual income bracket for respondents reporting Hmong, Japanese, Korean, or Chinese ethnicities.
+
 ## Society and Racism
 
 ```{r media}
 pre_aa %>% 
+  filter(!is.na(media1)) %>% 
   ggplot(aes(income2, fill = media1)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
   labs(title = "Pre-Election Survey: AA News Consumption") +
   coord_flip()
 ```
+
+To wrap up the data results, we'll lastly look at assorted questions about AA access, welfare, and racial aggressions. To start, the percentage of consumers of Asian/ethnic TV, radio, and newspapers increased with decreasing annual income brackets for respondents reporting Filipino, Hmong, Indian, Japanese, Korean, or Vietnamese ethnicities, while the percentage of support was the lowest in the middle annual income bracket for respondents reporting Cambodian or Chinese ethnicities. 
 
 ```{r importance}
 pre_aa %>% 
@@ -641,25 +755,11 @@ the issue that is the most important to the respondent personally") +
   coord_flip()
 ```
 
-* "ma1"
-    + Respondent's experience of the following macroaggression: "Have you ever been unfairly denied a promotion?"
-* "ma2"
-    + Respondent's experience of the following macroaggression: "Have you ever been unfairly fired from a job?"
-* "ma3"
-    + Respondent's experience of the following macroaggression: "For unfair reasons, do you think you have ever not been hired for a job?"
-* "ma4"
-    + Respondent's experience of the following macroaggression: "Have you ever been unfairly stopped, searched, questioned, physically threatened or abused by the police?"
-* "ma5"
-    + Respondent's experience of the following macroaggression: "Do you think you have ever been unfairly prevented from moving into a neighborhood?"
-* "ma6"
-    + Respondent's experience of the following macroaggression: "Have you ever moved into a neighborhood where neighbors made life difficult for you or your family?"
-* "ma7"
-    + Respondent's experience of the following macroaggression: "Have you ever been denied entry into a religious institution?"
-* "identity"
-    + Respondent's self-reflection as a member of the AAPI community
+For important issues of national and personal concerns, distinct variations differentiate the ethnicity lines. Cambodian respondents largely reported the economy as a national concern, and education as a heightened personal concern. Chinese respondents largely reported the economy as a national concern, and health care as a heightened personal concern. Filipino respondents largely reported the economy and terrorism as national concerns, and racism and health care as heightened personal concerns. Hmong respondents largely reported the economy and terrorism as national concerns, and health care and education as heightened personal concerns. Indian respondents largely reported the economy as national concerns, and terrorism and racism as heightened personal concerns. Japanese respondents largely reported the economy and terrorism as national concerns, and health care as heightened personal concerns. Korean respondents largely reported the economy as a national concern, and health care as heightened personal concerns. Vietnamese respondents largely reported the economy and terrorism as national concerns, and health care as heightened personal concerns. 
 
 ```{r discrimination}
 post_aa %>% 
+  filter(!is.na(mi7)) %>% 
   ggplot(aes(income2, fill = mi7)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -668,6 +768,7 @@ being threatened or harassed") +
   coord_flip()
 
 post_aa %>% 
+  filter(!is.na(mi8)) %>% 
   ggplot(aes(income2, fill = mi8)) +
   geom_bar(position="fill") +
   facet_wrap(~ ethnicity) +
@@ -675,19 +776,42 @@ post_aa %>%
 people mispronouncing their name") +
   coord_flip()
 
-post_aa %>% 
-  ggplot(aes(income2, fill = identity)) +
-  geom_bar(position="fill") +
-  facet_wrap(~ ethnicity) +
-  labs(title = "Post-Election Survey: Respondent's self-affiliation with
-their AA identities") +
-  coord_flip()
+# post_aa %>% 
+#   filter(!is.na(identity)) %>% 
+#   ggplot(aes(income2, fill = identity)) +
+#   geom_bar(position="fill") +
+#   facet_wrap(~ ethnicity) +
+#   labs(title = "Post-Election Survey: Respondent's self-affiliation with
+# their AA identities") +
+#   coord_flip()
 ```
 
-# Conclusion
+Last, but not least, we have variables measuring various situations of racism. For one variable that notes mispronunciations of a name, the percentage of people who have experienced these increased with increasing annual income brackets for respondents reporting any ethnicity except for Indian, for which (in addition to having higher numbers across all three socioeconomic subgroups than any other ethnicity depicted) the lowest percentage is in the middle annual income bracket. For another variable measures general threats or cases of harassment, the percentage of people who have experienced these increased with increasing annual income brackets for respondents reporting Chinese, Filipino, Hmong, or Vietnamese ethnicities; the percentage of the experienced was the highest in the middle annual income bracket for respondents reporting Cambodian, Indian, or Korean ethnicities; finally, the percentage of support was the lowest in the middle annual income bracket for respondents reporting Japanese ethnicities. 
 
-To summarize, this project revealed that several political experiences were intersected by socioeconomic standing. Despite generally affiliating with progressive leadership and parties, AA voices are left largely unsolicited. Asian Americans were less likely to be contacted by political parties and other partisan and nonpartisan voter organizations, with large variations across national origin lines.
-           
+# Significant Results and Concluding Thoughts
+
+To conclude, this project revealed that several political experiences were intersected by socioeconomic standing. I will quickly digress into some ethnicity-specific summations here.
+
+For the Cambodian demographic, the following behaviors were noted: (1) the poorer the respondent was, the more often they tended to support legalizing recreational marijuana, accepting Syrian refugees, and the ACA; (2) the richer the respondent was, the more often they tended to identify as a Democrat, receive contact from a campaign, and support black civil rights, a raised minimum wage, closing the income gap, undocumented naturalization, documentation-optional driver's licenses, and more work and family visas.
+
+For the Chinese demographic, the following behaviors were noted: (1) the poorer the respondent was, the more often they tended to vote for Clinton and support legalizing recreational marijuana, accepting Syrian refugees, federally discouraging foreign workers, and increasing income taxes on the wealthy; (2) the richer the respondent was, the more often they tended to receive contact from a campaign and/or a nonpartisan voter organization.
+
+For the Filipino demographic, the following behaviors were noted: the poorer the respondent was, the more often they tended to support black civil rights, legalizing recreational marijuana, federal college affordability, and documentation-optional driver's licenses; (2) the richer the respondent was, the more often they tended to receive contact from a campaign, oppose banning Muslims from the U.S., and support federally discouraging foreign workers and more work and family visas.
+
+For the Hmong demographic, the following behaviors were noted: (1) the poorer the respondent was, the more often they tended to vote for Clinton, receive contact from a nonpartisan voter organization, and support a raised minimum wage, closing the income gap, and more work and family visas; (2) the richer the respondent was, the more often they tended to receive contact from a campaign, oppose banning Muslims from the U.S.
+
+For the Indian demographic, the following behaviors were noted: (1) the poorer the respondent was, the more often they tended to receive contact from a nonpartisan voter organization and support limiting power plants in light of climate change, federal college affordability, raised minimum wage, closing the income gap, and undocumented naturalization; (2) the richer the respondent was, the more often they tended to receive contact from a campaign.
+
+For the Japanese demographic, the following behaviors were noted: (1) the poorer the respondent was, the more often they tended to oppose banning Muslims from the U.S., support legalizing recreational marijuana, federally discouraging foreign workers, a raised minimum wage, and more work and family visas; (2) the richer the respondent was, the more often they tended to support black civil rights, limiting power plants in light of climate change, and undocumented naturalization.
+
+For the Korean demographic, the following behaviors were noted: (1) the poorer the respondent was, the more often they tended to identify as a Democrat, favor Clinton, and unfavor Trump, as well as support federal college affordability, federally discouraging foreign workers, increased income taxes on the wealthy, and a raised minimum wage; (2) the richer the respondent was, the more often they tended to receive contact from a campaign, oppose banning Muslims from the U.S., and support accepting Syrian refugees.
+
+For the Vietnamese demographic, the following behaviors were noted: (1) the poorer the respondent is, the more often they tended to support black civil rights, college affordability, the ACA, increased income taxes on the wealthy, a raised minimum wage, and more work and family visas; (2) the richer the respondent was, the more often they tended to receive contact from a campaign and/or a nonpartisan voter organization, oppose banning Muslims from the U.S., and support undocumented naturalization and documentation-optional driver's licenses.
+
+Some larger takeaways from this dataset are also in order. For instance, compared to the national average, Asian American registered voters hold more favorable views of Obama and Clinton, and much more unfavorable views of Trump. However, despite generally affiliating with progressive leadership and parties, AA voices are left largely unsolicited. Every subgroup of socioeconomic standing across every ethnicity has reported at least a 50% nay vote, showing how Asian Americans were less likely to be contacted by political parties and other partisan and nonpartisan voter organizations. In addition, Asian Americans hold progressive views on many policy issues, including health care, education spending, racial justice, and bans on Muslim immigrants. However, they are split on Syrian refugees and are conservative on marijuana legalization. Moreover, ethnic media is an important source of information for Asian groups—several of the AAPI respondents participated in the 2016 NAAS surveys by speaking in a language other than English. Language barriers are capable of limiting AAPI exposure to current events, news and politics with the lack of accessibility in American news outlets. The most serious problems facing Asian Americans include education, health care, and terrorism. It is crucial that different avenues of literacy and access to the news, current events, and political moments in non-English formats are considered when designing infrastructure to civically engage with the AA communities. 
+
+As depicted by the several survey questions on microaggressions and other discriminatory treatment in the data, racism has acute variations across AA-specific ethnicities that as a whole have alarming levels of intensity even at the aggregated level—this is represented all too tragically in the rise in press coverage of Asian American hate crimes in 2021. Beyond the political stirrups of the COVID-19 years, Asian American hate crimes have been occurring for many, many years, and work like the NAAS is worth studying to validate the struggles of Asian Americans and the racism terraced with socioeconomic constraints in achieving social mobility in the United States. For the AA communities across the country, the political path is not uniform, but, rather, depends more strongly on socioeconomic standing, heritage, and age. Perhaps even more importantly, they are much less likely to be mobilized to participate in politics than most Americans. The AA communities have always been aggregately portrayed as a passive demographic group, but the 2016 NAAS data displays them in a more accurate light of strong, political voices and increasingly vital bodies to American politics today.
+
 # References
 
 Ramakrishnan, Karthick, Jennifer Lee, Taeku Lee, and Janelle Wong. “National Asian American Survey (NAAS) 2016 Pre-Election Survey.” Riverside, CA: National Asian American Survey. 2017-12-05.
