@@ -1,23 +1,11 @@
 ---
-title: "DPI 610 Final Project"
-subtitle: "AAPI Voices on the 2016 Presidential Election: Intersected by Socioeconomic Standing"
-date: "May 4, 2021"
+title: "cleaning data"
 author: "Angie Shin"
-output: pdf_document
+output: html_document
 --- 
 
-# Introduction
-
-Asian Americans and Pacific Islanders have been the most quickly growing racial demographic in the United States for the past twenty years. The AAPI communities claim an average growth of 600,000 registered voters per presidential election cycle, over 700 AAPI-serving organizations participating in National Voter Registration Day in September 2016, and an increase in Congressional candidates from 10 in 2010 to 30 in 2012 and 40 in 2016. While the AAPI communities face racist stereotypes of passiveness in civic engagement and political infrastructures, AAPI voices are strongly active in reality. 
-
-The National Asian American Survey (NAAS) is a scientific and nonpartisan effort to poll the opinions of Asian Americans and Pacific Islanders. Its significance lies in their careful measurement of ethnicities beyond the monolithic "Asian" label that the vast majority of public opinion surveys have normalized, when finding public opinion results at an ethnically granular level can actually reveal important lessons about the AAPI communities and experiences. This project will concern the 2016 public opinion surveys that the NAAS has organized before and after the 2016 presidential election, to measure AAPI political opinions intentionally and spotlight them in a deliberately academic manner in order to help close the gap in research and academia on AAPI experiences. The purpose of this project specifically will involve the socioeconomic standing of survey respondents, to investigate how income level and socioeconomic status affects AAPI experiences and policy views.
-
-# Dataset
-
-The 2016 National Asian American Survey is composed of two waves. Individual-level data from the Fall 2016 National Asian American Survey (pre-election) was fielded from August through October 2016. Individual-level data from the NAAS 2016 Post-Election Survey was fielded from November 2016 through February 2017. For both surveys, the NAAS collaborated with Catalist, a for-profit corporation based in Washington, D.C. that operates a voter database and provides data and data-related services to progressive organizations, to utilize registered voter and commercial vendor samples; these were classified according to a variety of ethnicity variables. The 2016 NAAS Pre-Election Survey conducted 2,238 telephone interviews to AAPI adults (respondents were required to be 18 years of age or older to proceed with the survey) between August 10 and September 29, 2016. The 2016 NAAS Post-Election Survey conducted 4,393 telephone interviews to AAPI adults (respondents were required to be 18 years of age or older to proceed with the survey) between November 10, 2016 and March 2, 2017. The variable codebook and survey questionnaire for the Pre-Election survey are available [here](https://github.com/shinangie/gov1003/tree/main/final/data/ICPSR_37024/DS0001), and the variable codebook and survey questionnaire for the Post-Election survey are available [here](https://github.com/shinangie/gov1003/tree/main/final/data/ICPSR_37380/DS0001). 
-
 ```{r setup, include=F}
-knitr::opts_chunk$set(include=F, echo=F)
+knitr::opts_chunk$set(echo=F)
 library(tidyverse)
 library(janitor)
 
@@ -119,191 +107,83 @@ post <- post_raw %>%
          ma7 = q5_2_g,
          identity = q4_101)
 
-write_csv(pre, "pre.csv")
-write_csv(post, "post.csv")
+# write_csv(pre, "pre.csv")
+# write_csv(post, "post.csv")
 ```
 
-## Demographic Information
+```{r cleaning}
+pre_aa <- pre %>% 
+  filter(racegroup %in% c("(1) ASIAN AMERICAN", "(02) NHPI"),
+         ethnicity != "(09) Laotian",
+         ethnicity != "(23) Taiwanese") %>% 
+  mutate_at(vars(p1, p2, p3, p4, p5, p6, p7), ~ as.character(.x),) %>% 
+  mutate_at(vars(p1, p2, p3, p4, p5, p6, p7), ~ case_when(.x == "(1) Support" ~ "Support",
+                                                          .x == "(2) Oppose" ~ "Oppose")) %>% 
+  mutate_at(vars(favorhc, favordt), ~ case_when(.x == "(1) Very unfavorable" ~ "--",
+                                                .x == "(2) Somewhat unfavorable" ~ "-",
+                                                .x == "(3) Somewhat favorable" ~ "+",
+                                                .x == "(4) Very favorable" ~ "++",
+                                                .x == "(5) No opinion" ~ "Neutral")) %>% 
+  mutate_at(vars(favorhc, favordt), ~ factor(.x, c("++", "+", "Neutral", "-", "--"))) %>% 
+  mutate(income2 = case_when(income1 == "(1) Up to $20,000" ~ "(1) less than $50,000",
+                             income1 == "(2) $20,000 to $50,000" ~ "(1) less than $50,000",
+                             income1 == "(3) $50,000 to $75,000" ~ "(2) $50,000 to $100,000",
+                             income1 == "(4) $75,000 to $100,000" ~ "(2) $50,000 to $100,000",
+                             income1 == "(5) $100,000 to $125,000" ~ "(3) more than $100,000",
+                             income1 == "(6) $125,000 to $250,000" ~ "(3) more than $100,000"),
+         income2 = factor(income2, levels = c("(3) more than $100,000", 
+                                              "(2) $50,000 to $100,000", 
+                                              "(1) less than $50,000")),
+         party = case_when(party == "(01) Democrat" ~ "D",
+                           party == "(02) Republican" ~ "R"),
+         votepred = case_when(votepred == "(1) Clinton" ~ "HC",
+                              votepred == "(2) Trump" ~ "DT"),
+         media1 = case_when(media1 == "(1) RETHNIC: or Asian American more" ~ "AA",
+                            media1 == "(2) Mainstream American more" ~ "AM",
+                            media1 == "(3) DO NOT READ  Both equally" ~ "Both")) %>% 
+  filter(!is.na(income2))
 
-For both the Pre-Election and the Post-Election surveys, I measured the following variables:
-
-* "id"
-    * Respondent ID
-* "wgt"
-    * Sampling weight
-        * determined by the NAAS using ethnicity and gender, age, state of residence, education, and nativity by a unique ranking method
-* "ethnicity" 
-    * Respondent's ethnicity
-        * ranging from over 60 options from the AAPI and Latinx communities to specify country-specific heritage
-* "racegroup" 
-    * Respondent's race demographic
-        * inclusive of Asian American (AA), Native Hawaiian or Pacific Islander (NHPI), White, Black, African American, Latinx, Native American, and Multiracial American
-* "state" 
-    + Respondent's state of residence
-* "gender" 
-    + Respondent's gender identity
-        - inclusive of male, female, and other
-* "education" 
-    + Respondent's highest completed level of education
-        - inclusive of no schooling completed, some schooling but no high school degree, high school degree or certificate, college degree or bachelor's degree, and graduate or professional degree
-* "nativity1" 
-    + Respondent's country of birth
-        - if respondent reports AA or NHPI
-* "nativity2" 
-    + Respondent's country of birth
-        - if respondent reports Latinx
-* "legality" 
-    + Respondent's immigration status
-* "income1" 
-    + Respondent's annual income
-        - grouped by 10,000 USD
-* "income2" 
-    + Respondent's annual income
-        - grouped by 50,000 USD
-* "age1" 
-    + Respondent's age group
-        - based on whether the respondent is of the ages 18-34 or 35 and above
-* "age2" 
-    + Respondent's age
-
-There were multiple versions of the income and age variables to provide enough levels of ambiguity for respondents such that they would feel comfortable consenting to release such information with the NAAS. For the majority of my analysis, I observed the data intersected by the "ethnicity" and the income variables.
-
-## Pre-Election Survey
-
-From the Pre-Election survey, I examined the following additional variables:
-
-* "reg" 
-    + Respondent's state of voter registration
-* "votepred" 
-    + Respondent's intended candidate of choice for the 2016 Presidential Election
-* "votelead" 
-    + Respondent's lean towards a candidate of choice for the 2016 Presidential Election
-* "party"
-    + Respondent's political party affiliation
-* "partycloser1"
-    + Respondent's closeness with the Republican or the Democratic party
-* "partycloser2"
-    + Respondent's closeness with the Republican or the Democratic party based on party standing with political issues
-* "favorbo"
-    + Respondent's stance of favor with Barack Obama
-* "favordt"
-    + Respondent's stance of favor with Donald Trump
-* "favorhc"
-    + Respondent's stance of favor with Hillary Clinton
-* "p1"
-    + Respondent's policy view on "the health care law passed by Barack Obama and Congress in 2010"
-* "p2"
-    + Respondent's policy view on "major new spending by the federal government that would help undergraduates pay tuition at public colleges without needing loans"
-* "p3"
-    + Respondent's policy view on "accepting Syrian refugees into the United States"
-* "p4"
-    + Respondent's policy view on "legalizing the possession of small amounts of marijuana for personal use"
-* "p5"
-    + Respondent's policy view on "banning people who are Muslim from entering the United States"
-* "p6"
-    + Respondent's policy view on "setting stricter emission limits on power plants in order to address climate change"
-* "p7"
-    + Respondent's policy view on "the government doing more to give blacks equal rights with whites"
-* "media1"
-    + Respondent's method of getting information about politics
-        - if respondent reports AA
-* "media2"
-    + Respondent's method of getting information about politics
-        - if respondent reports NHPI
-* "soc1"
-    + Respondent's view on "the most important problem facing the United States today"
-* "soc2"
-    + Respondent's view on "the issue [that] is the most important to you personally"
-
-## Post-Election Survey
-
-* "reg"
-    + Respondent's state of voter registration
-* "vote"
-    + Respondent's state of voting
-* "voteres"
-    + Respondent's voted candidate of choice for the 2016 Presidential Election
-* "party"
-    + Respondent's political party affiliation
-* "partycloser1"
-    + Respondent's closeness with the Republican or the Democratic party
-* "partycloser2"
-    + Respondent's closeness with the Republican or the Democratic party based on party standing with political issues
-* "favorbo"
-    + Respondent's stance of favor with Barack Obama
-* "favordt"
-    + Respondent's stance of favor with Donald Trump
-* "favorhc"
-    + Respondent's stance of favor with Hillary Clinton
-* "contact1"
-    + Respondent's status of receiving contact from campaign organizations about the election
-* "contact2"
-    + Respondent's status of receiving contact from nonpartisan organizations about the election
-* "e1"
-    + Respondent's policy view of the following: "The federal government should do more to reduce income differences between the richest and poorest households"
-* "e2"
-    + Respondent's policy view of the following: "The federal government should do more to regulate banks."
-* "e3"
-    + Respondent's policy view of the following: "The federal government should raise the minimum wage to allow every working American a decent standard of living."
-* "e4"
-    + Respondent's policy view of the following: "The federal government should increase income taxes on people making over a million dollars a year."
-* "e5"
-    + Respondent's policy view of the following: "The federal government should do more to discourage big American companies from hiring foreign workers to replace workers in the U.S."
-* "e6"
-    + Respondent's policy view of the following: "The federal government should enact major new spending that would help undergraduates pay tuition at public colleges without needing loans."
-* "i1"
-    + Respondent's policy view of the following: "Undocumented or illegal immigrants should be allowed to have an opportunity to eventually become U.S. citizens."
-* "i2"
-    + Respondent's policy view of the following: "Congress needs to increase the number of work visas it issues every year."
-* "i3"
-    + Respondent's policy view of the following: "Congress needs to increase the number of family visas it issues every year."
-* "i4"
-    + Respondent's policy view of the following: "States should provide driver's licenses to all residents, regardless of their immigration status."
-* "mi1"
-    + Respondent's experience of the following microaggression: "You are treated with less courtesy or respect than other people."
-* "mi2"
-    + Respondent's experience of the following microaggression: "You receive poorer service than other people at restaurants or stores."
-* "mi3"
-    + Respondent's experience of the following microaggression: "People act as if you don't speak English."
-* "mi4"
-    + Respondent's experience of the following microaggression: "People act as if they are afraid of you."
-* "mi5"
-    + Respondent's experience of the following microaggression: "People act as if they're better than you are."
-* "mi6"
-    + Respondent's experience of the following microaggression: "You are called names or insulted."
-* "mi7"
-    + Respondent's experience of the following microaggression: "You are threatened or harassed."
-* "mi8"
-    + Respondent's experience of the following microaggression: "People mispronounce your name."
-* "mi9"
-    + Respondent's experience of the following microaggression: "People assume you are good at math and science."
-* "ma1"
-    + Respondent's experience of the following macroaggression: "Have you ever been unfairly denied a promotion?"
-* "ma2"
-    + Respondent's experience of the following macroaggression: "Have you ever been unfairly fired from a job?"
-* "ma3"
-    + Respondent's experience of the following macroaggression: "For unfair reasons, do you think you have ever not been hired for a job?"
-* "ma4"
-    + Respondent's experience of the following macroaggression: "Have you ever been unfairly stopped, searched, questioned, physically threatened or abused by the police?"
-* "ma5"
-    + Respondent's experience of the following macroaggression: "Do you think you have ever been unfairly prevented from moving into a neighborhood?"
-* "ma6"
-    + Respondent's experience of the following macroaggression: "Have you ever moved into a neighborhood where neighbors made life difficult for you or your family?"
-* "ma7"
-    + Respondent's experience of the following macroaggression: "Have you ever been denied entry into a religious institution?"
-* "identity"
-    + Respondent's self-reflection as a member of the AAPI community
-
-# Results
-
-
-
-## Pre-Election Survey
-
-## Post-Election Survey
-
-# Conclusion
-
-As explored above, socioeconomic standing affects 
-           
-# References
+post_aa <- post %>% 
+  filter(racegroup %in% c("(1) Asian American", "(2) Pacific Islander"),
+         ethnicity != "(01) Bangladeshi",
+         ethnicity != "(10) Pakistani",
+         ethnicity != "(12) Native Hawaiian",
+         ethnicity != "(13) Samoan",
+         ethnicity != "(16) Fijian") %>% 
+  mutate_at(vars(e1, e2, e3, e4, e5, e6,
+                 i1, i2, i3, i4), ~ case_when(.x == "(1) Strongly agree" ~ "Strong Agree",
+                                              .x == "(2) Somewhat agree" ~ "Agree",
+                                              .x == "(3) Neither" ~ "Neutral",
+                                              .x == "(4) Somewhat disagree" ~ "Disagree",
+                                              .x == "(5) Strongly disagree" ~ "Strong Disagree")) %>% 
+  mutate_at(vars(e1, e2, e3, e4, e5, e6,
+                 i1, i2, i3, i4), ~ factor(.x, levels = c("Srong Agree", "Agree", "Neutral",
+                                                          "Disagree", "Strong Disagree"))) %>% 
+  mutate_at(vars(favorhc, favordt), ~ case_when(.x == "(1) Very unfavorable" ~ "--",
+                                                .x == "(2) Somewhat unfavorable" ~ "-",
+                                                .x == "(3) Somewhat favorable" ~ "+",
+                                                .x == "(4) Very favorable" ~ "++",
+                                                .x == "(5) No opinion" ~ "Neutral")) %>% 
+  mutate_at(vars(favorhc, favordt), ~ factor(.x, c("++", "+", "Neutral", "-", "--"))) %>% 
+  mutate(income2 = case_when(income1 == "(1) Up to $20,000" ~ "(1) less than $50,000",
+                             income1 == "(2) $20,000 to $50,000" ~ "(1) less than $50,000",
+                             income1 == "(3) $50,000 to $75,000" ~ "(2) $50,000 to $100,000",
+                             income1 == "(4) $75,000 to $100,000" ~ "(2) $50,000 to $100,000",
+                             income1 == "(5) $100,000 to $125,000" ~ "(3) more than $100,000",
+                             income1 == "(6) $125,000 to $250,000" ~ "(3) more than $100,000"),
+         income2 = factor(income2, levels = c("(3) more than $100,000", 
+                                              "(2) $50,000 to $100,000", 
+                                              "(1) less than $50,000")),
+         party = case_when(party == "(1) Democrat" ~ "D",
+                           party == "(2) Republican" ~ "R"),
+         voteres = case_when(voteres == "(1) Clinton" ~ "HC",
+                             voteres == "(2) Trump" ~ "DT"),
+         identity = case_when(identity == "(1) Asian American" ~ "AA",
+                              identity == "(2) ANSWERFROM(RETHNIC)" ~ "Asian",
+                              identity == "(3) ANSWERFROM(RETHNIC) American" ~ "AA",
+                              identity == "(4) Asian" ~ "Asian",
+                              identity == "(5) American" ~ "American",
+                              identity == "(6) Other" ~ "None",
+                              identity == "(7) None of these" ~ "None")) %>% 
+  filter(!is.na(income2))
+```
