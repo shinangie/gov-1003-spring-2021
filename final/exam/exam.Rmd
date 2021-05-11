@@ -1,0 +1,130 @@
+---
+title: "DPI 610 Exam Section 3"
+subtitle: DPI 610
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE)
+library(tidyverse)
+library(olsrr)
+library(Ecdat)
+library(boot)
+
+df <- data.frame(
+  year = seq(1952,2016,4),
+  gdp_q2 = c(0.9,3.3,-2.1,4.4,6.9,9.4,3,-8,7.1,5.4,4.4,6.8,7.5,3.1,2.1,1.7,1.9),
+  inc_poll_pre = c(47.4,49.2,49.2,50.3,34.4,58.2,47.3,79.2,53.2,58.4,40.4,42.9,56.8,46.7,52.9,63.2,51.5),
+  inc_poll_post = c(40.9,54.1,47.9,69.8,44.3,64.9,42.3,50,61.1,53,43.8,58.1,54.3,53.1,48.5,51.5,52.6),
+  inc_party_voteshare = c(44.6,57.8,49.9,61.3,49.6,61.8,48.9,44.7,59.2,53.9,46.5,54.7,50.3,51.3,46.3,51.9,51.1)
+)
+```
+
+# A Simple Forecasting Model
+
+This question examines a fundamental model of forecasting U.S. Presidential Elections based on an economic indicator and on polls. The data.frame `df` includes data for forecasting elections, with variables tracking: 
+
+- year of the election (`year`)
+- 2nd quarter GDP growth in the year of the election (`gdp_q2`)
+- poll results for the incumbent party's presidential nominee (`inc_poll_pre`) _before_ the party conventions
+- poll results for the incumbent party's presidential nominee (`inc_poll_post`) _after_ the party conventions
+- the presidential election vote share for the incumbent party (`inc_party_voteshare`)
+
+## Question 1: Exploring the Election Data
+
+What is the average (across all years in the data) for the incumbent party in the *post-convention* polling? For Q2 GDP growth? What year had the most lopsided election in terms of two-party voteshare since 1952?
+
+## Answer 1
+
+```{r q1}
+mean(df$inc_poll_post)
+mean(df$gdp_q2)
+df$year[which(grepl(max(df$inc_party_voteshare), df$inc_party_voteshare))]
+```
+
+The average (across all years in the data) for the incumbent party in the *post-convention* polling is 52.36471%. 
+The average (across all years in the data) for Q2 GDP growth is 3.4. 
+The year 1972 had the most lopsided election in terms of two-party voteshare since 1952.
+
+## Question 2: Estimating an Election Model
+
+Using an ordinary least squares regression for the years 1952 to 2016, estimate the relationship between incumbent party vote share and the predictors Q2 GDP and pre-conventions polling. Interpret the relationship between vote share and each of these variables. 
+
+## Answer 2
+
+```{r q2}
+olsr_pre <- ols_regress(inc_party_voteshare ~ inc_poll_pre + gdp_q2, data = df)
+olsr_pre
+```
+
+For an ordinary least squares regression for the years 1952 to 2016, the relationship between incumbent party vote share and the predictors Q2 GDP and pre-conventions polling is characterized by the following:
+* Holding the Q2 GDP variable constant, for every four years (or every election cycle), pre-conventions polling affects incumbent party vote share by 0.198%, with a standard error of 0.126%.
+* Holding the pre-conventions polling variable constant, for every four years (or every election cycle), Q2 GDP affects incumbent party vote share by 1.020%, with a standard error of 0.306%.
+This model is only of moderate positive strength, as we're observing R-Squared values of less than 0.50; in addition, for the pre-conventions polling variable, the lower and upper bounds for the standardized test statistic score enclose the 0 value, meaning the variable's effect is not statistically significant.
+
+## Question 3: Re-Estimating an Election Model
+
+Again, using an ordinary least squares regression for the years 1952 to 2016, estimate the relationship between incumbent party vote share and the predictors Q2 GDP and *post-convention* polling. Note that the only difference between the model in this question and the previous one is replacing pre-convention polling with post-convention polling as an explanatory variable. Interpret the relationship between vote share and each of these variables. What accounts for the different results in the two models? 
+
+## Answer 3
+
+```{r q3}
+olsr_post <- ols_regress(inc_party_voteshare ~ inc_poll_post + gdp_q2, data = df)
+olsr_post
+```
+
+For an ordinary least squares regression for the years 1952 to 2016, the relationship between incumbent party vote share and the predictors Q2 GDP and post-conventions polling is characterized by the following:
+* Holding the Q2 GDP variable constant, for every four years (or every election cycle), post-conventions polling affects incumbent party vote share by 0.530%, with a standard error of 0.081%.
+* Holding the pre-conventions polling variable constant, for every four years (or every election cycle), Q2 GDP affects incumbent party vote share by 0.372%, with a standard error of 0.155%.
+This model is of strong positive strength, as we're observing R-Squared values greater than 0.75; in addition, the standard error for post-convention polling is comparatively smaller than that of the pre-convention polling variable, its lower and upper bounds do not enclose 0, and its coefficient is more than twice that of the pre-convention polling variable. Because of these differences in particular, we can infer that post-convention polling is a more accurate indicator of incumbent party vote share.
+
+## Question 4: Out-of-Sample Forecasts
+
+Suppose you would like to assess the performance for each of the two possible models from the previous two questions by performing *out-of-sample predictions* for each election year (e.g., for each year election year, (1) fit a model using _all other election years_, and (2) then make a prediction for the election year in question). This is known as leave-one-out cross validation. What is the mean absolute error for the predictions made by each of the two models? In terms of identifying the national popular-vote winner, for what share of elections does each model make the right prediction? 
+
+```{r q4}
+loocv <- function(m, y) {
+  x1 <- df %>% 
+    filter(year == y)
+  
+  x2 <- df %>% 
+    filter(year != y)
+  
+  if(m == "pre") {
+    folsr <- ols_regress(inc_party_voteshare ~ inc_poll_pre + gdp_q2, data = x2)
+  }
+  
+  if(m == "post"){
+    folsr <- ols_regress(inc_party_voteshare ~ inc_poll_post + gdp_q2, data = x2)
+  }
+  
+  as.numeric(predict(folsr$model, newdata = x1)[1])
+}
+
+for(i in 1:nrow(df)) {
+  df$pre[i] <- round(loocv("pre", df$year[i]), digits = 1)
+  df$post[i] <- round(loocv("post", df$year[i]), digits = 1)
+  df$prediff[i] <- df$pre[i] - df$inc_party_voteshare
+  df$postdiff[i] <- df$post[i] - df$inc_party_voteshare
+}
+
+df <- df %>% 
+  mutate(actual = ifelse(inc_party_voteshare > 50, 1, 0),
+         preres = ifelse(pre > 50, 1, 0),
+         postres = ifelse(post > 50, 1, 0),
+         preacc = ifelse(actual == preres, 1, 0),
+         postacc = ifelse(actual == postres, 1, 0))
+
+df %>% 
+  summarize(premae = mean(prediff),
+            postmae = mean(postdiff),
+            preacc = mean(preacc),
+            postacc = mean(postacc))
+```
+
+The mean absolute error for the predictions made by the model with pre-convention polling was 7.541176.
+The mean absolute error for the predictions made by the model with post-convention polling was 7.505882.
+In terms of identifying the national popular-vote winner, the model with pre-convention polling makes the right prediction 76.47059% of the time, according to this dataset.
+In terms of identifying the national popular-vote winner, the model with post-convention polling makes the right prediction 100% of the time, according to this dataset.

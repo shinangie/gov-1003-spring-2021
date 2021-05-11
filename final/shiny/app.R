@@ -342,13 +342,6 @@ server <- function(input, output, session) {
       geom_bar() +
       theme_classic()
   })
-
-  # # dd for aapi identities (post)
-  # 
-  # output$plot13 <- renderPlot({
-  #   ggplot(post, aes(voteres)) +
-  #     geom_bar()
-  # })
 }
 
 shinyApp(ui = ui, server = server)
